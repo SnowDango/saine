@@ -42,7 +42,9 @@
       "https://*/*"
     ],
     "permissions": [
-      "activeTab"
+      "activeTab",
+      "alarms",
+      "storage"
     ]
   }
 }

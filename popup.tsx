@@ -1,10 +1,30 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 type Status = "idle" | "success" | "error" | "not-github"
+
+interface UpdateInfo {
+  hasUpdate: boolean
+  latestVersion: string | null
+  currentVersion: string
+  releaseUrl: string | null
+}
 
 function IndexPopup() {
   const [status, setStatus] = useState<Status>("idle")
   const [withReload, setWithReload] = useState(true)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+
+  useEffect(() => {
+    chrome.runtime.sendMessage({ type: "GET_UPDATE_INFO" }, (info) => {
+      if (info) setUpdateInfo(info)
+    })
+  }, [])
+
+  const handleCheckUpdate = () => {
+    chrome.runtime.sendMessage({ type: "CHECK_UPDATE" }, (info) => {
+      if (info) setUpdateInfo(info)
+    })
+  }
 
   const handleClearCache = async () => {
     try {
@@ -71,6 +91,32 @@ function IndexPopup() {
         </div>
       </div>
 
+      {/* 更新通知バナー */}
+      {updateInfo?.hasUpdate && (
+        <a
+          href={updateInfo.releaseUrl ?? "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            marginBottom: 12,
+            background: "#ddf4ff",
+            border: "1px solid #54aeff",
+            borderRadius: 6,
+            textDecoration: "none",
+            color: "#0969da",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}>
+          <span>🆕</span>
+          <span>v{updateInfo.latestVersion} が利用可能です</span>
+        </a>
+      )}
+
       <hr style={{ border: "none", borderTop: "1px solid #d0d7de", margin: "0 0 16px" }} />
 
       {/* リロードオプション */}
@@ -129,6 +175,34 @@ function IndexPopup() {
           {statusMessage[status]}
         </div>
       )}
+
+      {/* バージョン情報 & 更新チェック */}
+      <div style={{ marginTop: 16, borderTop: "1px solid #d0d7de", paddingTop: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}>
+          <span style={{ fontSize: 11, color: "#8c959f" }}>
+            v{updateInfo?.currentVersion ?? chrome.runtime.getManifest().version}
+          </span>
+          <button
+            onClick={handleCheckUpdate}
+            style={{
+              fontSize: 11,
+              color: "#0969da",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 4px",
+              borderRadius: 4,
+              fontFamily: "inherit",
+            }}>
+            更新を確認
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

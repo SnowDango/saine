@@ -1,0 +1,54 @@
+{
+  "extDescription": {
+    "message": "GitHub上でAndroid Vector Drawableをプレビュー"
+  },
+  "popupSubtitle": {
+    "message": "GitHub上でAndroid Vectorをプレビュー"
+  },
+  "updateAvailable": {
+    "message": "v$VERSION$ が利用可能です",
+    "placeholders": {
+      "version": { "content": "$1" }
+    }
+  },
+  "reloadAfterClear": {
+    "message": "削除後にページをリロード"
+  },
+  "clearCache": {
+    "message": "キャッシュをクリア"
+  },
+  "statusSuccess": {
+    "message": "キャッシュをクリアしました"
+  },
+  "statusError": {
+    "message": "エラーが発生しました"
+  },
+  "statusNotGithub": {
+    "message": "GitHub PRページで実行してください"
+  },
+  "checkForUpdates": {
+    "message": "更新を確認"
+  },
+  "panelTitle": {
+    "message": "Image Diff"
+  },
+  "diffTruncated": {
+    "message": "差分が省略されています — すべて展開するとプレビューが完全になります"
+  },
+  "showCodeDiff": {
+    "message": "コード差分を表示"
+  },
+  "hideCodeDiff": {
+    "message": "コード差分を隠す"
+  },
+  "newFile": {
+    "message": "新規ファイル"
+  },
+  "noPreview": {
+    "message": "プレビューなし"
+  },
+  "deleted": {
+    "message": "削除済み"
+  }
+}
+

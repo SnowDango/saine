@@ -1,0 +1,54 @@
+{
+  "extDescription": {
+    "message": "Android Vector Preview on GitHub"
+  },
+  "popupSubtitle": {
+    "message": "Android Vector Preview on GitHub"
+  },
+  "updateAvailable": {
+    "message": "v$VERSION$ is available",
+    "placeholders": {
+      "version": { "content": "$1" }
+    }
+  },
+  "reloadAfterClear": {
+    "message": "Reload page after clearing"
+  },
+  "clearCache": {
+    "message": "Clear Cache"
+  },
+  "statusSuccess": {
+    "message": "Cache cleared"
+  },
+  "statusError": {
+    "message": "An error occurred"
+  },
+  "statusNotGithub": {
+    "message": "Please run on a GitHub PR page"
+  },
+  "checkForUpdates": {
+    "message": "Check for updates"
+  },
+  "panelTitle": {
+    "message": "Image Diff"
+  },
+  "diffTruncated": {
+    "message": "Diff is truncated — expand all lines for a complete preview"
+  },
+  "showCodeDiff": {
+    "message": "Show code diff"
+  },
+  "hideCodeDiff": {
+    "message": "Hide code diff"
+  },
+  "newFile": {
+    "message": "New file"
+  },
+  "noPreview": {
+    "message": "No preview"
+  },
+  "deleted": {
+    "message": "Deleted"
+  }
+}
+

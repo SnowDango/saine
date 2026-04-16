@@ -1,5 +1,7 @@
 import type { PreviewData } from "../models/types"
 
+import { t } from "~lib/i18n"
+
 const PREVIEW_PX = 88
 
 // ─── SVG id uniquification ────────────────────────────────────────────────────
@@ -176,12 +178,12 @@ export function renderPanel(
   const left = document.createElement("div")
   left.style.cssText = "display:flex;align-items:center;gap:8px;"
   const panelTitle = document.createElement("span")
-  panelTitle.textContent = "Image Diff"
+  panelTitle.textContent = t("panelTitle")
   panelTitle.style.cssText = "font-size:12px;font-weight:600;color:#1f2328;"
   left.appendChild(panelTitle)
   if (!isComplete) {
     const warn = document.createElement("span")
-    warn.textContent = "差分が省略されています — すべて展開するとプレビューが完全になります"
+    warn.textContent = t("diffTruncated")
     warn.style.cssText =
       "font-size:11px;color:#9a6700;background:#fff8c5;padding:1px 6px;border-radius:4px;"
     left.appendChild(warn)
@@ -191,7 +193,7 @@ export function renderPanel(
   // ── Toggle button ──
   let codeVisible = false
   const toggleBtn = document.createElement("button")
-  toggleBtn.textContent = "コード差分を表示"
+  toggleBtn.textContent = t("showCodeDiff")
   toggleBtn.style.cssText = `
     font-size:12px;color:#0969da;background:none;border:none;
     cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit;
@@ -201,7 +203,7 @@ export function renderPanel(
   toggleBtn.addEventListener("click", () => {
     codeVisible = !codeVisible
     if (diffContent) diffContent.style.display = codeVisible ? "" : "none"
-    toggleBtn.textContent = codeVisible ? "コード差分を隠す" : "コード差分を表示"
+    toggleBtn.textContent = codeVisible ? t("hideCodeDiff") : t("showCodeDiff")
   })
   headerBar.appendChild(toggleBtn)
   panel.appendChild(headerBar)
@@ -214,7 +216,7 @@ export function renderPanel(
       "Before",
       changeType === "added" ? makeBadge("n/a", "#8c959f") : makeBadge("BASE", "#6e40c9"),
       baseSvg,
-      changeType === "added" ? "New file" : "No preview",
+      changeType === "added" ? t("newFile") : t("noPreview"),
       `${panelKey}_before`
     )
   )
@@ -230,7 +232,7 @@ export function renderPanel(
       "After",
       makeBadge(afterBadgeText, afterBadgeColor),
       headSvg,
-      changeType === "deleted" ? "Deleted" : "No preview",
+      changeType === "deleted" ? t("deleted") : t("noPreview"),
       `${panelKey}_after`
     )
   )

@@ -6,8 +6,9 @@
   "author": "SnowDango",
   "scripts": {
     "dev": "plasmo dev",
-    "build": "plasmo build",
-    "package": "plasmo package",
+    "postdev": "node tools/copy-locales.mjs",
+    "build": "plasmo build && node tools/copy-locales.mjs",
+    "package": "plasmo package && node tools/copy-locales.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -38,6 +39,7 @@
     "vitest": "^4.1.4"
   },
   "manifest": {
+    "default_locale": "en",
     "host_permissions": [
       "https://*/*"
     ],

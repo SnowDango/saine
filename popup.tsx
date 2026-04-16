@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 
+import { t } from "~lib/i18n"
+
 type Status = "idle" | "success" | "error" | "not-github"
 
 interface UpdateInfo {
@@ -59,9 +61,9 @@ function IndexPopup() {
   }
 
   const statusMessage: Record<Exclude<Status, "idle">, string> = {
-    success: "キャッシュをクリアしました",
-    error: "エラーが発生しました",
-    "not-github": "GitHub PR ページで実行してください",
+    success: t("statusSuccess"),
+    error: t("statusError"),
+    "not-github": t("statusNotGithub"),
   }
 
   const statusColor: Record<Exclude<Status, "idle">, string> = {
@@ -87,7 +89,7 @@ function IndexPopup() {
           Saine
         </div>
         <div style={{ fontSize: 12, color: "#57606a" }}>
-          Android Vector Preview on GitHub
+          {t("popupSubtitle")}
         </div>
       </div>
 
@@ -113,7 +115,7 @@ function IndexPopup() {
             cursor: "pointer",
           }}>
           <span>🆕</span>
-          <span>v{updateInfo.latestVersion} が利用可能です</span>
+          <span>{t("updateAvailable", updateInfo.latestVersion ?? "")}</span>
         </a>
       )}
 
@@ -135,7 +137,7 @@ function IndexPopup() {
           onChange={(e) => setWithReload(e.target.checked)}
           style={{ cursor: "pointer", accentColor: "#0969da", width: 14, height: 14 }}
         />
-        <span style={{ fontSize: 12, color: "#24292f" }}>削除後にページをリロード</span>
+        <span style={{ fontSize: 12, color: "#24292f" }}>{t("reloadAfterClear")}</span>
       </label>
 
       {/* キャッシュクリアボタン */}
@@ -160,7 +162,7 @@ function IndexPopup() {
           gap: 6,
         }}>
         <span>🗑</span>
-        キャッシュをクリア
+        {t("clearCache")}
       </button>
 
       {/* ステータスメッセージ */}
@@ -199,7 +201,7 @@ function IndexPopup() {
               borderRadius: 4,
               fontFamily: "inherit",
             }}>
-            更新を確認
+            {t("checkForUpdates")}
           </button>
         </div>
       </div>

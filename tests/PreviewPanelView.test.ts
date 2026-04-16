@@ -37,7 +37,7 @@ describe("renderPanel", () => {
     expect(diffContent.style.display).toBe("none")
     const panel = container.querySelector("[data-vdp-panel]")
     expect(panel).not.toBeNull()
-    expect(panel!.textContent).toContain("Image Diff")
+    expect(panel!.textContent).toContain("panelTitle")
     expect(panel!.textContent).toContain("BASE")
     expect(panel!.textContent).toContain("HEAD")
     expect(panel!.textContent).toContain("Before")
@@ -57,7 +57,7 @@ describe("renderPanel", () => {
     const panel = container.querySelector("[data-vdp-panel]")!
     expect(panel.textContent).toContain("n/a")
     expect(panel.textContent).toContain("ADDED")
-    expect(panel.textContent).toContain("New file")
+    expect(panel.textContent).toContain("newFile")
   })
 
   it("deleted の場合、After に DELETED バッジが表示される", () => {
@@ -72,7 +72,7 @@ describe("renderPanel", () => {
 
     const panel = container.querySelector("[data-vdp-panel]")!
     expect(panel.textContent).toContain("DELETED")
-    expect(panel.textContent).toContain("Deleted")
+    expect(panel.textContent).toContain("deleted")
   })
 
   it("isComplete=false の場合、警告メッセージが表示される", () => {
@@ -86,7 +86,7 @@ describe("renderPanel", () => {
     renderPanel(container, diffContent, data)
 
     const panel = container.querySelector("[data-vdp-panel]")!
-    expect(panel.textContent).toContain("差分が省略されています")
+    expect(panel.textContent).toContain("diffTruncated")
   })
 
   it("SVG がある場合、light/dark 両方のボックスが生成される", () => {
@@ -116,16 +116,16 @@ describe("renderPanel", () => {
 
     const btn = container.querySelector("[data-vdp-panel] button") as HTMLButtonElement
     expect(btn).not.toBeNull()
-    expect(btn.textContent).toBe("コード差分を表示")
+    expect(btn.textContent).toBe("showCodeDiff")
     expect(diffContent.style.display).toBe("none")
 
     btn.click()
     expect(diffContent.style.display).toBe("")
-    expect(btn.textContent).toBe("コード差分を隠す")
+    expect(btn.textContent).toBe("hideCodeDiff")
 
     btn.click()
     expect(diffContent.style.display).toBe("none")
-    expect(btn.textContent).toBe("コード差分を表示")
+    expect(btn.textContent).toBe("showCodeDiff")
   })
 
   it("diffContent が null でもエラーにならない", () => {

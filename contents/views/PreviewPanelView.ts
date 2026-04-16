@@ -80,9 +80,9 @@ function makeSvgBox(svgHtml: string, bg: string, border: string, scope: string):
   inner.innerHTML = uniquifySvgIds(svgHtml, scope)
   const svgEl = inner.querySelector("svg")
   if (svgEl) {
-    svgEl.setAttribute("width", String(sz))
-    svgEl.setAttribute("height", String(sz))
-    ;(svgEl as SVGElement).style.display = "block"
+    svgEl.removeAttribute("width")
+    svgEl.removeAttribute("height")
+    ;(svgEl as SVGElement).style.cssText = `display:block;max-width:${sz}px;max-height:${sz}px;width:auto;height:auto;`
   }
   box.appendChild(inner)
   return box

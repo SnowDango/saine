@@ -43,8 +43,13 @@ jobs:
         run: |
           VERSION=$(node -e "console.log(require('./package.json').version)")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-      - name: Rename artifact
-        run: cp build/chrome-mv3-prod.zip "saine-${VERSION}.zip"
+
+      - name: Sign extension (CRX)
+        run: |
+          echo "${{ secrets.EXTENSION_PEM }}" > extension.pem
+          npx crx3 build/chrome-mv3-prod -p extension.pem -o "saine-${VERSION}.crx"
+          rm extension.pem
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -52,5 +57,4 @@ jobs:
           name: v${{ env.VERSION }}-${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: saine-${{ env.VERSION }}.zip
-
+          files: saine-${{ env.VERSION }}.crx

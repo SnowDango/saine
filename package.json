@@ -1,7 +1,7 @@
 {
   "name": "saine",
   "displayName": "Saine",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Android Vector Preview on Github",
   "author": "SnowDango",
   "scripts": {
@@ -28,6 +28,7 @@
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
     "@vitest/coverage-v8": "^4.1.4",
+    "crx3": "^2.0.0",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.5.0",

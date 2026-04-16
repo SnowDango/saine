@@ -17,16 +17,16 @@ Preview Android Vector Drawable XML files directly in GitHub Pull Requests.
 - 🌗 **Light & Dark Preview** — Displays each icon on both light and dark backgrounds
 - 🔔 **Update Notifications** — Checks GitHub Releases for new versions and notifies you in the popup
 - 🧹 **Cache Control** — Clear preview cache from the popup with one click
+- 🌐 **Localization** — Supports English and Japanese (auto-detected from browser language)
 
 ## 📦 Install
 
 ### From GitHub Releases (Recommended)
 
-1. Download the latest `saine-*.zip` from [Releases](../../releases/latest)
-2. Unzip the downloaded file
-3. Open `chrome://extensions` in Chrome
-4. Enable **Developer mode** (toggle in the top right)
-5. Click **Load unpacked** and select the unzipped folder
+1. Download the latest `saine-*.crx` from [Releases](../../releases/latest)
+2. Open `chrome://extensions` in Chrome
+3. Enable **Developer mode** (toggle in the top right)
+4. Drag and drop the `.crx` file onto the extensions page
 
 ### Build from Source
 
@@ -44,14 +44,14 @@ Then load `build/chrome-mv3-prod` as an unpacked extension.
 1. Navigate to any Pull Request on GitHub that contains Vector Drawable XML files (files in `drawable/` directories ending with `.xml`)
 2. The extension automatically detects these files and replaces the code diff with a visual preview panel
 3. The panel shows **Before (BASE)** and **After (HEAD)** images, each on light and dark backgrounds
-4. Click **「コード差分を表示」** to toggle the original code diff view
+4. Click **"Show code diff"** to toggle the original code diff view
 
 ### Popup Actions
 
 Click the Saine extension icon to open the popup:
 
-- **🗑 キャッシュをクリア** — Clears cached branch refs and re-scans the page
-- **更新を確認** — Manually checks for new versions on GitHub Releases
+- **🗑 Clear Cache** — Clears cached branch refs and re-scans the page
+- **Check for updates** — Manually checks for new versions on GitHub Releases
 
 ## 🛠️ Development
 

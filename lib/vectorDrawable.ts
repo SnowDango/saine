@@ -88,8 +88,8 @@ function convertChildren(
 function applyPathAttributes(
   el: Element,
   path: Element,
-  defs: Element,
-  svgDoc: Document
+  _defs: Element,
+  _svgDoc: Document
 ): void {
   const pathData = androidAttr(el, "pathData")
   if (pathData) path.setAttribute("d", pathData)

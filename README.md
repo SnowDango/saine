@@ -1,35 +1,77 @@
 [English](README.md) | [日本語](README.ja.md)
 
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+<div align="center">
 
-## Getting Started
+# Saine
 
-First, run the development server:
+**Android Vector Drawable Preview on GitHub**
+
+Preview Android Vector Drawable XML files directly in GitHub Pull Requests.
+
+</div>
+
+## ✨ Features
+
+- 🖼️ **Inline Preview** — Automatically renders Vector Drawable XML as SVG images in PR diff views
+- 🔀 **Before / After Comparison** — Shows base (before) and head (after) versions side by side
+- 🌗 **Light & Dark Preview** — Displays each icon on both light and dark backgrounds
+- 🔔 **Update Notifications** — Checks GitHub Releases for new versions and notifies you in the popup
+- 🧹 **Cache Control** — Clear preview cache from the popup with one click
+
+## 📦 Install
+
+### From GitHub Releases (Recommended)
+
+1. Download the latest `saine-*.zip` from [Releases](../../releases/latest)
+2. Unzip the downloaded file
+3. Open `chrome://extensions` in Chrome
+4. Enable **Developer mode** (toggle in the top right)
+5. Click **Load unpacked** and select the unzipped folder
+
+### Build from Source
 
 ```bash
-pnpm dev
-# or
-npm run dev
-```
-
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
-
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
-
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
-
-## Making production build
-
-Run the following:
-
-```bash
-pnpm build
-# or
+git clone https://github.com/SnowDango/saine.git
+cd saine
+npm install
 npm run build
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+Then load `build/chrome-mv3-prod` as an unpacked extension.
 
-## Submit to the webstores
+## 🚀 Usage
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+1. Navigate to any Pull Request on GitHub that contains Vector Drawable XML files (files in `drawable/` directories ending with `.xml`)
+2. The extension automatically detects these files and replaces the code diff with a visual preview panel
+3. The panel shows **Before (BASE)** and **After (HEAD)** images, each on light and dark backgrounds
+4. Click **「コード差分を表示」** to toggle the original code diff view
+
+### Popup Actions
+
+Click the Saine extension icon to open the popup:
+
+- **🗑 キャッシュをクリア** — Clears cached branch refs and re-scans the page
+- **更新を確認** — Manually checks for new versions on GitHub Releases
+
+## 🛠️ Development
+
+```bash
+npm install
+npm run dev
+```
+
+Load `build/chrome-mv3-dev` as an unpacked extension. Changes auto-reload.
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Production build |
+| `npm run package` | Build and package as ZIP |
+| `npm test` | Run tests |
+| `npm run lint` | Run ESLint |
+
+## 📄 License
+
+MIT

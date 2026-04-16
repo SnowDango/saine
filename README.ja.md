@@ -1,35 +1,77 @@
 [English](README.md) | [日本語](README.ja.md)
 
-これは [`plasmo init`](https://www.npmjs.com/package/plasmo) でブートストラップされた [Plasmo extension](https://docs.plasmo.com/) プロジェクトです。
+<div align="center">
 
-## はじめに
+# Saine
 
-まず、開発サーバーを起動します:
+**Android Vector Drawable Preview on GitHub**
+
+GitHub の Pull Request 上で Android Vector Drawable XML ファイルを直接プレビューする Chrome 拡張機能です。
+
+</div>
+
+## ✨ 特徴
+
+- 🖼️ **インラインプレビュー** — PR の差分ビューで Vector Drawable XML を SVG 画像として自動描画
+- 🔀 **Before / After 比較** — base（変更前）と head（変更後）を横並びで表示
+- 🌗 **ライト & ダーク プレビュー** — 各アイコンを明るい背景と暗い背景の両方で表示
+- 🔔 **更新通知** — GitHub Releases の新バージョンをチェックしてポップアップで通知
+- 🧹 **キャッシュ管理** — ポップアップからワンクリックでプレビューキャッシュをクリア
+
+## 📦 インストール
+
+### GitHub Releases から（推奨）
+
+1. [Releases](../../releases/latest) から最新の `saine-*.zip` をダウンロード
+2. ダウンロードしたファイルを解凍
+3. Chrome で `chrome://extensions` を開く
+4. 右上の **デベロッパーモード** を有効にする
+5. **パッケージ化されていない拡張機能を読み込む** をクリックし、解凍したフォルダを選択
+
+### ソースからビルド
 
 ```bash
-pnpm dev
-# または
-npm run dev
-```
-
-ブラウザを開き、適切な開発ビルドを読み込んでください。たとえば、Manifest V3 を使用した Chrome ブラウザ向けに開発する場合は `build/chrome-mv3-dev` を使用します。
-
-`popup.tsx` を編集することでポップアップを変更できます。変更を加えると自動的に更新されます。オプションページを追加するには、プロジェクトルートに `options.tsx` ファイルを作成し、React コンポーネントをデフォルトエクスポートするだけです。同様に、コンテンツページを追加するには、プロジェクトルートに `content.ts` ファイルを作成し、モジュールをインポートしてロジックを記述した後、ブラウザで拡張機能をリロードしてください。
-
-詳細なガイドは [ドキュメント](https://docs.plasmo.com/) をご覧ください。
-
-## プロダクションビルド
-
-以下のコマンドを実行してください:
-
-```bash
-pnpm build
-# または
+git clone https://github.com/SnowDango/saine.git
+cd saine
+npm install
 npm run build
 ```
 
-拡張機能のプロダクションバンドルが生成されます。ZIP に圧縮してストアに公開する準備が整います。
+`build/chrome-mv3-prod` を「パッケージ化されていない拡張機能」として読み込んでください。
 
-## ウェブストアへの申請
+## 🚀 使い方
 
-Plasmo 拡張機能をデプロイする最も簡単な方法は、組み込みの [bpp](https://bpp.browser.market) GitHub Action を使用することです。このアクションを使用する前に、拡張機能をビルドして最初のバージョンをストアにアップロードし、基本的な認証情報を確立しておく必要があります。その後、[セットアップ手順](https://docs.plasmo.com/framework/workflows/submit) に従えば、自動申請の準備が整います。
+1. GitHub 上で Vector Drawable XML ファイル（`drawable/` ディレクトリ内の `.xml` ファイル）を含む Pull Request を開く
+2. 拡張機能が自動的にファイルを検出し、コード差分をビジュアルプレビューパネルに置き換えます
+3. パネルには **Before（BASE）** と **After（HEAD）** の画像がライト・ダーク両方の背景で表示されます
+4. **「コード差分を表示」** をクリックすると元のコード差分表示に切り替えられます
+
+### ポップアップの機能
+
+Saine の拡張機能アイコンをクリックしてポップアップを開きます：
+
+- **🗑 キャッシュをクリア** — キャッシュされたブランチ情報を削除し、ページを再スキャン
+- **更新を確認** — GitHub Releases の新バージョンを手動でチェック
+
+## 🛠️ 開発
+
+```bash
+npm install
+npm run dev
+```
+
+`build/chrome-mv3-dev` を「パッケージ化されていない拡張機能」として読み込んでください。変更は自動的にリロードされます。
+
+### コマンド一覧
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | ホットリロード付き開発サーバーを起動 |
+| `npm run build` | プロダクションビルド |
+| `npm run package` | ビルドして ZIP にパッケージ |
+| `npm test` | テストを実行 |
+| `npm run lint` | ESLint を実行 |
+
+## 📄 ライセンス
+
+MIT

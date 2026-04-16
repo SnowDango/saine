@@ -204,6 +204,19 @@ function IndexPopup() {
             {t("checkForUpdates")}
           </button>
         </div>
+        <div style={{ marginTop: 6, textAlign: "right" }}>
+          <a
+            href={chrome.runtime.getURL("tabs/license.html")}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 11,
+              color: "#0969da",
+              textDecoration: "none",
+            }}>
+            {t("licenses")}
+          </a>
+        </div>
       </div>
     </div>
   )

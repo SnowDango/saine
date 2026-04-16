@@ -1,12 +1,13 @@
 {
   "name": "saine",
   "displayName": "Saine",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Android Vector Preview on Github",
   "author": "SnowDango",
   "scripts": {
     "dev": "plasmo dev",
     "postdev": "node tools/copy-locales.mjs",
+    "prebuild": "node tools/generate-licenses.mjs",
     "build": "plasmo build && node tools/copy-locales.mjs",
     "package": "plasmo package && node tools/copy-locales.mjs",
     "test": "vitest run",
@@ -33,6 +34,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.5.0",
     "jsdom": "^29.0.2",
+    "license-checker": "^25.0.1",
     "pngjs": "^7.0.0",
     "prettier": "3.2.4",
     "typescript": "5.3.3",

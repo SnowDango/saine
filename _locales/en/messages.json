@@ -29,6 +29,9 @@
   "checkForUpdates": {
     "message": "Check for updates"
   },
+  "licenses": {
+    "message": "Licenses"
+  },
   "panelTitle": {
     "message": "Image Diff"
   },

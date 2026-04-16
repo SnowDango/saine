@@ -29,6 +29,9 @@
   "checkForUpdates": {
     "message": "更新を確認"
   },
+  "licenses": {
+    "message": "ライセンス"
+  },
   "panelTitle": {
     "message": "Image Diff"
   },

@@ -42,7 +42,7 @@ function IndexPopup() {
         return
       }
 
-      await chrome.tabs.sendMessage(tab.id, { type: "CLEAR_CACHE" })
+      await chrome.tabs.sendMessage(tab.id, { type: "CLEAR_CACHE", rescan: !withReload })
 
       if (withReload) {
         await chrome.tabs.reload(tab.id)

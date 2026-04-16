@@ -183,7 +183,7 @@ export function boot(): void {
         removePanel(el, diffContent)
       })
 
-      if (isPrPage(location.href)) scanPage()
+      if (message.rescan !== false && isPrPage(location.href)) scanPage()
       sendResponse({ ok: true })
     }
     return true

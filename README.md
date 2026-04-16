@@ -23,10 +23,13 @@ Preview Android Vector Drawable XML files directly in GitHub Pull Requests.
 
 ### From GitHub Releases (Recommended)
 
-1. Download the latest `saine-*.crx` from [Releases](../../releases/latest)
-2. Open `chrome://extensions` in Chrome
-3. Enable **Developer mode** (toggle in the top right)
-4. Drag and drop the `.crx` file onto the extensions page
+1. Download the latest `saine-*.zip` from [Releases](../../releases/latest)
+2. Extract the ZIP file
+3. Open `chrome://extensions` in Chrome
+4. Enable **Developer mode** (toggle in the top right)
+5. Click **"Load unpacked"** and select the extracted folder
+
+> **Note:** A `.crx` file is also available in Releases, but Chrome may block installation with `CRX_REQUIRED_PROOF_MISSING`. Use the ZIP method above if that happens.
 
 ### Build from Source
 

@@ -23,10 +23,13 @@ GitHub の Pull Request 上で Android Vector Drawable XML ファイルを直接
 
 ### GitHub Releases から（推奨）
 
-1. [Releases](../../releases/latest) から最新の `saine-*.crx` をダウンロード
-2. Chrome で `chrome://extensions` を開く
-3. 右上の **デベロッパーモード** を有効にする
-4. `.crx` ファイルを拡張機能ページにドラッグ＆ドロップ
+1. [Releases](../../releases/latest) から最新の `saine-*.zip` をダウンロード
+2. ZIP ファイルを展開する
+3. Chrome で `chrome://extensions` を開く
+4. 右上の **デベロッパーモード** を有効にする
+5. **「パッケージ化されていない拡張機能を読み込む」** をクリックし、展開したフォルダを選択
+
+> **注意:** Releases には `.crx` ファイルも公開されていますが、Chrome が `CRX_REQUIRED_PROOF_MISSING` エラーでインストールをブロックする場合があります。その場合は上記の ZIP 方式をお使いください。
 
 ### ソースからビルド
 

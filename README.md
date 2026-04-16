@@ -1,3 +1,5 @@
+[English](README.md) | [日本語](README.ja.md)
+
 This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
 
 ## Getting Started

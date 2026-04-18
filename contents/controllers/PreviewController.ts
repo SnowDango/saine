@@ -116,20 +116,24 @@ async function processFileContainer(container: Element): Promise<void> {
 // ─── Blob page processing ─────────────────────────────────────────────────────
 
 async function processBlobPage(): Promise<void> {
-  const blobInfo = parseBlobUrlInfo(location.href)
-  if (!blobInfo || !isDrawableXml(blobInfo.path)) return
-
-  let container: Element | null = null
-  for (const sel of BLOB_CONTENT_SELECTORS) {
-    container = document.querySelector(sel)
-    if (container) break
-  }
-  if (!container || container.hasAttribute(BLOB_PROCESSED_ATTR)) return
-  container.setAttribute(BLOB_PROCESSED_ATTR, "1")
+  if (!isExtensionValid()) return
 
   try {
+    const blobInfo = parseBlobUrlInfo(location.href)
+    if (!blobInfo || !isDrawableXml(blobInfo.path)) return
+
+    let container: Element | null = null
+    for (const sel of BLOB_CONTENT_SELECTORS) {
+      container = document.querySelector(sel)
+      if (container) break
+    }
+    if (!container || container.hasAttribute(BLOB_PROCESSED_ATTR)) return
+    container.setAttribute(BLOB_PROCESSED_ATTR, "1")
+
     const raw = await fetchRawGithub(blobInfo.org, blobInfo.repo, blobInfo.ref, blobInfo.path)
     if (!raw || !isAndroidVectorDrawable(raw)) return
+    if (!document.contains(container)) return
+    if (!isExtensionValid()) return
 
     const headSvg = vectorDrawableToSvg(raw)
     const data: PreviewData = { baseSvg: null, headSvg, changeType: "added", isComplete: true }
@@ -137,6 +141,7 @@ async function processBlobPage(): Promise<void> {
     container.parentElement?.insertBefore(placeholder, container)
     renderPanel(placeholder, null, data)
   } catch (err) {
+    if (isContextInvalidated(err)) { teardown(); return }
     console.warn("[VDP] blob error:", err)
   }
 }

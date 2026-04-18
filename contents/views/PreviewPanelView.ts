@@ -321,13 +321,6 @@ export function renderPanel(
     )
   }
 
-  // Initial build with estimated width
-  const initWidth = (container as HTMLElement).getBoundingClientRect?.().width
-    || (container as HTMLElement).offsetWidth
-    || 800
-  buildBody(initWidth)
-  panel.appendChild(body)
-
   // ── Responsive layout: switch to vertical when too narrow ──
   const VERTICAL_THRESHOLD = 500
   const applyLayout = (width: number) => {
@@ -343,7 +336,6 @@ export function renderPanel(
       divider.style.cssText = "width:1px;background:#d0d7de;margin:0 24px;flex-shrink:0;"
     }
   }
-  applyLayout(initWidth)
   if (typeof ResizeObserver !== "undefined") {
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -353,6 +345,8 @@ export function renderPanel(
     ro.observe(body)
   }
 
+  // Insert panel first so we can measure the accurate width synchronously
+  panel.appendChild(body)
   const anchor = diffContent ?? container.querySelector(".file-header")
   if (anchor?.parentElement) {
     anchor.parentElement.insertBefore(panel, anchor)
@@ -360,14 +354,13 @@ export function renderPanel(
     container.appendChild(panel)
   }
 
-  // Rebuild with accurate width after DOM insertion
-  requestAnimationFrame(() => {
-    const actualWidth = panel.getBoundingClientRect().width
-    if (actualWidth > 0 && Math.abs(actualWidth - initWidth) > 10) {
-      buildBody(actualWidth)
-      applyLayout(actualWidth)
-    }
-  })
+  // Measure accurate width after DOM insertion and build once
+  const panelWidth = panel.getBoundingClientRect().width
+    || (container as HTMLElement).getBoundingClientRect?.().width
+    || (container as HTMLElement).offsetWidth
+    || 800
+  buildBody(panelWidth)
+  applyLayout(panelWidth)
 }
 
 /**

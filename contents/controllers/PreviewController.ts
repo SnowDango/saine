@@ -7,8 +7,10 @@ import {
   findHeadRefFromContainer,
   getDiffContent,
   getFilePath,
+  isBlobPage,
   isDrawableXml,
   isPrPage,
+  parseBlobUrlInfo,
   parsePrUrlInfo,
   resolvePrRefs,
 } from "../models/GitHubService"
@@ -19,6 +21,14 @@ import { removePanel, renderPanel } from "../views/PreviewPanelView"
 
 const PROCESSED_ATTR = "data-vdp-done"
 const FILE_CONTAINER_SELECTOR = ".file, [data-tagsearch-path], [data-diff-anchor]"
+const BLOB_PROCESSED_ATTR = "data-vdp-blob-done"
+const BLOB_CONTENT_SELECTORS = [
+  "[data-target='blob.content']",
+  ".react-code-file-content",
+  ".blob-wrapper",
+  ".js-blob-wrapper",
+  "#file",
+]
 
 // ─── Core processing ──────────────────────────────────────────────────────────
 
@@ -103,6 +113,34 @@ async function processFileContainer(container: Element): Promise<void> {
   }
 }
 
+// ─── Blob page processing ─────────────────────────────────────────────────────
+
+async function processBlobPage(): Promise<void> {
+  const blobInfo = parseBlobUrlInfo(location.href)
+  if (!blobInfo || !isDrawableXml(blobInfo.path)) return
+
+  let container: Element | null = null
+  for (const sel of BLOB_CONTENT_SELECTORS) {
+    container = document.querySelector(sel)
+    if (container) break
+  }
+  if (!container || container.hasAttribute(BLOB_PROCESSED_ATTR)) return
+  container.setAttribute(BLOB_PROCESSED_ATTR, "1")
+
+  try {
+    const raw = await fetchRawGithub(blobInfo.org, blobInfo.repo, blobInfo.ref, blobInfo.path)
+    if (!raw || !isAndroidVectorDrawable(raw)) return
+
+    const headSvg = vectorDrawableToSvg(raw)
+    const data: PreviewData = { baseSvg: null, headSvg, changeType: "added", isComplete: true }
+    const placeholder = document.createElement("div")
+    container.parentElement?.insertBefore(placeholder, container)
+    renderPanel(placeholder, null, data)
+  } catch (err) {
+    console.warn("[VDP] blob error:", err)
+  }
+}
+
 // ─── Page scanning ────────────────────────────────────────────────────────────
 
 function scanPage(): void {
@@ -134,8 +172,12 @@ function teardown(): void {
 
 function onNavigation(): void {
   if (!isExtensionValid()) { teardown(); return }
-  try { if (isPrPage(location.href)) scanPage() }
-  catch (err) { if (isContextInvalidated(err)) teardown() }
+  try {
+    if (isPrPage(location.href)) scanPage()
+    else if (isBlobPage(location.href)) processBlobPage().catch((err) => console.warn("[VDP] blob error:", err))
+  } catch (err) {
+    if (isContextInvalidated(err)) teardown()
+  }
 }
 
 /**
@@ -145,6 +187,7 @@ export function boot(): void {
   if (!isExtensionValid()) return
 
   if (isPrPage(location.href)) scanPage()
+  else if (isBlobPage(location.href)) processBlobPage().catch((err) => console.warn("[VDP] blob error:", err))
 
   document.addEventListener("turbo:load", onNavigation)
   document.addEventListener("pjax:end", onNavigation)
@@ -152,17 +195,20 @@ export function boot(): void {
   observer = new MutationObserver((mutations) => {
     if (!isExtensionValid()) { teardown(); return }
     try {
-      if (!isPrPage(location.href)) return
-      for (const mut of mutations) {
-        for (const node of mut.addedNodes) {
-          if (!(node instanceof HTMLElement)) continue
-          if (node.matches(FILE_CONTAINER_SELECTOR)) {
-            processFileContainer(node).catch((err) => console.warn("[VDP] observer error:", err))
+      if (isPrPage(location.href)) {
+        for (const mut of mutations) {
+          for (const node of mut.addedNodes) {
+            if (!(node instanceof HTMLElement)) continue
+            if (node.matches(FILE_CONTAINER_SELECTOR)) {
+              processFileContainer(node).catch((err) => console.warn("[VDP] observer error:", err))
+            }
+            node.querySelectorAll<Element>(FILE_CONTAINER_SELECTOR).forEach((c) => {
+              processFileContainer(c).catch((err) => console.warn("[VDP] observer error:", err))
+            })
           }
-          node.querySelectorAll<Element>(FILE_CONTAINER_SELECTOR).forEach((c) => {
-            processFileContainer(c).catch((err) => console.warn("[VDP] observer error:", err))
-          })
         }
+      } else if (isBlobPage(location.href)) {
+        processBlobPage().catch((err) => console.warn("[VDP] observer error:", err))
       }
     } catch (err) {
       if (isContextInvalidated(err)) { teardown(); return }

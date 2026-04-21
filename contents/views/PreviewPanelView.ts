@@ -370,3 +370,84 @@ export function removePanel(container: Element, diffContent: HTMLElement | null)
   container.querySelectorAll("[data-vdp-panel]").forEach((p) => p.remove())
   if (diffContent) diffContent.style.display = ""
 }
+
+// ─── Blob single-file preview ─────────────────────────────────────────────────
+
+const MAX_BLOB_PX = 480
+
+/**
+ * blob ページ用の大きめシングルビューパネルを生成し、
+ * container の直前に挿入する。
+ */
+export function renderBlobPanel(container: Element, svgHtml: string): void {
+  const seq = panelRenderSeq++
+
+  const panel = document.createElement("div")
+  panel.setAttribute("data-vdp-panel", "1")
+  panel.style.cssText =
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #d0d7de;"
+
+  // ── Header ──
+  const headerBar = document.createElement("div")
+  headerBar.style.cssText =
+    "display:flex;align-items:center;padding:8px 16px;background:#f6f8fa;border-bottom:1px solid #d0d7de;"
+  const titleEl = document.createElement("span")
+  titleEl.textContent = t("panelTitle")
+  titleEl.style.cssText = "font-size:12px;font-weight:600;color:#1f2328;"
+  headerBar.appendChild(titleEl)
+  panel.appendChild(headerBar)
+
+  // ── Body ──
+  const body = document.createElement("div")
+  body.style.cssText = "padding:16px 24px;background:#fff;"
+
+  const buildBody = (panelW: number) => {
+    body.innerHTML = ""
+    const boxGap = 16
+    const bodyPadding = 24 * 2
+    const mbw = Math.max(
+      MIN_PREVIEW_PX,
+      Math.min(MAX_BLOB_PX, Math.floor((panelW - bodyPadding - boxGap) / 2))
+    )
+
+    const row = document.createElement("div")
+    row.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:flex-end;"
+
+    const mkThemeCol = (bg: string, border: string, label: string, suffix: string) => {
+      const col = document.createElement("div")
+      col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px;"
+      col.appendChild(makeSvgBox(svgHtml, bg, border, `vdp_blob_${seq}_${suffix}`, mbw))
+      const lbl = document.createElement("span")
+      lbl.textContent = label
+      lbl.style.cssText = "font-size:11px;color:#8c959f;"
+      col.appendChild(lbl)
+      return col
+    }
+
+    row.appendChild(mkThemeCol("#ffffff", "#d0d7de", "light", "l"))
+    row.appendChild(mkThemeCol("#0d1117", "#30363d", "dark", "d"))
+    body.appendChild(row)
+
+    const dims = parseSvgAspectRatio(svgHtml)
+    if (dims) {
+      const d = document.createElement("div")
+      d.textContent = `w:${Math.round(dims.w)} × h:${Math.round(dims.h)}`
+      d.style.cssText = "text-align:center;font-size:11px;color:#8c959f;margin-top:6px;"
+      body.appendChild(d)
+    }
+  }
+
+  panel.appendChild(body)
+  container.insertAdjacentElement("beforebegin", panel)
+
+  const w = panel.getBoundingClientRect().width || 800
+  buildBody(w)
+
+  if (typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) buildBody(entry.contentRect.width)
+    })
+    ro.observe(panel)
+  }
+}

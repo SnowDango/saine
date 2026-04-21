@@ -15,7 +15,7 @@ import {
   resolvePrRefs,
 } from "../models/GitHubService"
 import type { ChangeType, PreviewData } from "../models/types"
-import { removePanel, renderPanel } from "../views/PreviewPanelView"
+import { removePanel, renderBlobPanel, renderPanel } from "../views/PreviewPanelView"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -139,10 +139,7 @@ async function processBlobPage(): Promise<void> {
     if (!isExtensionValid()) return
 
     const headSvg = vectorDrawableToSvg(raw)
-    const data: PreviewData = { baseSvg: null, headSvg, changeType: "added", isComplete: true }
-    const placeholder = document.createElement("div")
-    container.parentElement?.insertBefore(placeholder, container)
-    renderPanel(placeholder, null, data)
+    renderBlobPanel(container, headSvg)
   } catch (err) {
     if (isContextInvalidated(err)) { teardown(); return }
     console.warn("[VDP] blob error:", err)

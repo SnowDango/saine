@@ -138,15 +138,19 @@ function makeSvgBox(svgHtml: string, bg: string, border: string, scope: string, 
 
 function makeEmptyBox(label: string, height = MIN_PREVIEW_PX): HTMLElement {
   const box = document.createElement("div")
-  box.style.cssText = `
-    width:${MIN_PREVIEW_PX}px;height:${height}px;
-    display:flex;align-items:center;justify-content:center;
-    background:#f6f8fa;border:1px dashed #d0d7de;
-    border-radius:6px;flex-shrink:0;
-  `
+  box.style.cssText = [
+    `width:${MIN_PREVIEW_PX}px;height:${height}px;`,
+    "display:flex;align-items:center;justify-content:center;",
+    "background:var(--bgColor-muted,var(--color-canvas-subtle,#f6f8fa));",
+    "border:1px dashed var(--borderColor-default,var(--color-border-default,#d0d7de));",
+    "border-radius:6px;flex-shrink:0;",
+  ].join("")
   const span = document.createElement("span")
   span.textContent = label
-  span.style.cssText = "font-size:10px;color:#8c959f;text-align:center;padding:4px;"
+  span.style.cssText = [
+    "font-size:10px;text-align:center;padding:4px;",
+    "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+  ].join("")
   box.appendChild(span)
   return box
 }
@@ -176,7 +180,10 @@ function makeColumn(
   titleRow.style.cssText = "display:flex;align-items:center;gap:6px;"
   const titleEl = document.createElement("span")
   titleEl.textContent = title
-  titleEl.style.cssText = "font-size:12px;font-weight:600;color:#57606a;"
+  titleEl.style.cssText = [
+    "font-size:12px;font-weight:600;",
+    "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+  ].join("")
   titleRow.appendChild(titleEl)
   titleRow.appendChild(badge)
   col.appendChild(titleRow)
@@ -195,13 +202,19 @@ function makeColumn(
   col.appendChild(boxes)
   const hint = document.createElement("div")
   hint.textContent = "light / dark"
-  hint.style.cssText = "font-size:11px;color:#8c959f;"
+  hint.style.cssText = [
+    "font-size:11px;",
+    "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+  ].join("")
   col.appendChild(hint)
   const srcDims = svgHtml ? parseSvgAspectRatio(svgHtml) : null
   if (srcDims) {
     const dimsEl = document.createElement("div")
-    dimsEl.textContent = `w:${Math.round(srcDims.w)} × h:${Math.round(srcDims.h)}`
-    dimsEl.style.cssText = "font-size:11px;color:#8c959f;"
+    dimsEl.textContent = `${Math.round(srcDims.w)} × ${Math.round(srcDims.h)} dp`
+    dimsEl.style.cssText = [
+      "font-size:11px;",
+      "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+    ].join("")
     col.appendChild(dimsEl)
   }
   return col
@@ -226,26 +239,36 @@ export function renderPanel(
   const panel = document.createElement("div")
   const panelKey = `vdp_panel_${panelRenderSeq++}`
   panel.setAttribute("data-vdp-panel", "1")
-  panel.style.cssText =
-    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #d0d7de;"
+  panel.style.cssText = [
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;",
+    "border-bottom:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
 
   // ── Header bar ──
   const headerBar = document.createElement("div")
-  headerBar.style.cssText = `
-    display:flex;align-items:center;justify-content:space-between;
-    padding:8px 16px;background:#f6f8fa;border-bottom:1px solid #d0d7de;
-  `
+  headerBar.style.cssText = [
+    "display:flex;align-items:center;justify-content:space-between;",
+    "padding:8px 16px;",
+    "background:var(--bgColor-muted,var(--color-canvas-subtle,#f6f8fa));",
+    "border-bottom:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
   const left = document.createElement("div")
   left.style.cssText = "display:flex;align-items:center;gap:8px;"
   const panelTitle = document.createElement("span")
   panelTitle.textContent = t("panelTitle")
-  panelTitle.style.cssText = "font-size:12px;font-weight:600;color:#1f2328;"
+  panelTitle.style.cssText = [
+    "font-size:12px;font-weight:600;line-height:20px;",
+    "color:var(--fgColor-default,var(--color-fg-default,#1f2328));",
+  ].join("")
   left.appendChild(panelTitle)
   if (!isComplete) {
     const warn = document.createElement("span")
     warn.textContent = t("diffTruncated")
-    warn.style.cssText =
-      "font-size:11px;color:#9a6700;background:#fff8c5;padding:1px 6px;border-radius:4px;"
+    warn.style.cssText = [
+      "font-size:11px;padding:1px 6px;border-radius:4px;",
+      "color:var(--fgColor-attention,var(--color-attention-fg,#9a6700));",
+      "background:var(--bgColor-attention-muted,var(--color-attention-subtle,#fff8c5));",
+    ].join("")
     left.appendChild(warn)
   }
   headerBar.appendChild(left)
@@ -254,11 +277,14 @@ export function renderPanel(
   let codeVisible = false
   const toggleBtn = document.createElement("button")
   toggleBtn.textContent = t("showCodeDiff")
-  toggleBtn.style.cssText = `
-    font-size:12px;color:#0969da;background:none;border:none;
-    cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit;
-  `
-  toggleBtn.addEventListener("mouseenter", () => { toggleBtn.style.background = "#f3f4f6" })
+  toggleBtn.style.cssText = [
+    "font-size:12px;background:none;border:none;",
+    "cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit;",
+    "color:var(--fgColor-accent,var(--color-accent-fg,#0969da));",
+  ].join("")
+  toggleBtn.addEventListener("mouseenter", () => {
+    toggleBtn.style.background = "var(--bgColor-neutral-muted,var(--color-neutral-subtle,#f3f4f6))"
+  })
   toggleBtn.addEventListener("mouseleave", () => { toggleBtn.style.background = "none" })
   toggleBtn.addEventListener("click", () => {
     codeVisible = !codeVisible
@@ -270,10 +296,16 @@ export function renderPanel(
 
   // ── Body ──
   const body = document.createElement("div")
-  body.style.cssText = "display:flex;align-items:center;padding:16px 24px;background:#fff;"
+  body.style.cssText = [
+    "display:flex;align-items:center;padding:16px 24px;",
+    "background:var(--bgColor-default,var(--color-canvas-default,#ffffff));",
+  ].join("")
 
   const divider = document.createElement("div")
-  divider.style.cssText = "width:1px;background:#d0d7de;margin:0 24px;flex-shrink:0;align-self:stretch;"
+  divider.style.cssText = [
+    "width:1px;margin:0 24px;flex-shrink:0;align-self:stretch;",
+    "background:var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
 
   const afterBadgeText =
     changeType === "added" ? "ADDED" : changeType === "deleted" ? "DELETED" : "HEAD"
@@ -321,29 +353,22 @@ export function renderPanel(
     )
   }
 
-  // Initial build with estimated width
-  const initWidth = (container as HTMLElement).getBoundingClientRect?.().width
-    || (container as HTMLElement).offsetWidth
-    || 800
-  buildBody(initWidth)
-  panel.appendChild(body)
-
   // ── Responsive layout: switch to vertical when too narrow ──
   const VERTICAL_THRESHOLD = 500
   const applyLayout = (width: number) => {
+    const borderVar = "var(--borderColor-default,var(--color-border-default,#d0d7de))"
     if (width < VERTICAL_THRESHOLD) {
       body.style.flexDirection = "column"
       body.style.alignItems = "stretch"
       body.style.gap = "16px"
-      divider.style.cssText = "height:1px;background:#d0d7de;flex-shrink:0;"
+      divider.style.cssText = `height:1px;flex-shrink:0;background:${borderVar};`
     } else {
       body.style.flexDirection = "row"
       body.style.alignItems = ""
       body.style.gap = "0"
-      divider.style.cssText = "width:1px;background:#d0d7de;margin:0 24px;flex-shrink:0;"
+      divider.style.cssText = `width:1px;margin:0 24px;flex-shrink:0;align-self:stretch;background:${borderVar};`
     }
   }
-  applyLayout(initWidth)
   if (typeof ResizeObserver !== "undefined") {
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -353,6 +378,8 @@ export function renderPanel(
     ro.observe(body)
   }
 
+  // Insert panel first so we can measure the accurate width synchronously
+  panel.appendChild(body)
   const anchor = diffContent ?? container.querySelector(".file-header")
   if (anchor?.parentElement) {
     anchor.parentElement.insertBefore(panel, anchor)
@@ -360,14 +387,13 @@ export function renderPanel(
     container.appendChild(panel)
   }
 
-  // Rebuild with accurate width after DOM insertion
-  requestAnimationFrame(() => {
-    const actualWidth = panel.getBoundingClientRect().width
-    if (actualWidth > 0 && Math.abs(actualWidth - initWidth) > 10) {
-      buildBody(actualWidth)
-      applyLayout(actualWidth)
-    }
-  })
+  // Measure accurate width after DOM insertion and build once
+  const panelWidth = panel.getBoundingClientRect().width
+    || (container as HTMLElement).getBoundingClientRect?.().width
+    || (container as HTMLElement).offsetWidth
+    || 800
+  buildBody(panelWidth)
+  applyLayout(panelWidth)
 }
 
 /**
@@ -376,4 +402,116 @@ export function renderPanel(
 export function removePanel(container: Element, diffContent: HTMLElement | null): void {
   container.querySelectorAll("[data-vdp-panel]").forEach((p) => p.remove())
   if (diffContent) diffContent.style.display = ""
+}
+
+// ─── Blob single-file preview ─────────────────────────────────────────────────
+
+const MAX_BLOB_PX = 480
+
+/**
+ * blob ページ用の大きめシングルビューパネルを生成し、anchor 要素の指定位置に挿入する。
+ * - "afterend"   : anchor の直後（最終コミットボックスの下）
+ * - "beforebegin": anchor の直前（フォールバック用）
+ *
+ * GitHub Primer の CSS カスタムプロパティを使用してライト/ダークモードに自動対応する。
+ */
+export function renderBlobPanel(anchor: Element, svgHtml: string, position: InsertPosition = "afterend"): void {
+  const seq = panelRenderSeq++
+
+  const panel = document.createElement("div")
+  panel.setAttribute("data-vdp-panel", "1")
+  panel.style.cssText = [
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;",
+    "border:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+    "border-radius:6px;",
+    "overflow:hidden;",
+    "margin:8px 0;",
+    "width:100%;",
+    "box-sizing:border-box;",
+  ].join("")
+
+  // ── Header ──
+  const headerBar = document.createElement("div")
+  headerBar.style.cssText = [
+    "display:flex;align-items:center;gap:8px;",
+    "padding:8px 16px;",
+    "background:var(--bgColor-muted,var(--color-canvas-subtle,#f6f8fa));",
+    "border-bottom:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
+
+  // アイコン（SVG の絵文字の代わりに GitHub スタイルの小さなドット）
+  const titleEl = document.createElement("span")
+  titleEl.textContent = t("blobPanelTitle")
+  titleEl.style.cssText = [
+    "font-size:12px;font-weight:600;",
+    "color:var(--fgColor-default,var(--color-fg-default,#1f2328));",
+    "line-height:20px;",
+  ].join("")
+
+  headerBar.appendChild(titleEl)
+  panel.appendChild(headerBar)
+
+  // ── Body ──
+  const body = document.createElement("div")
+  body.style.cssText = [
+    "padding:16px 24px;",
+    "background:var(--bgColor-default,var(--color-canvas-default,#ffffff));",
+  ].join("")
+
+  const buildBody = (panelW: number) => {
+    body.innerHTML = ""
+    const boxGap = 16
+    const bodyPadding = 24 * 2
+    const mbw = Math.max(
+      MIN_PREVIEW_PX,
+      Math.min(MAX_BLOB_PX, Math.floor((panelW - bodyPadding - boxGap) / 2))
+    )
+
+    const row = document.createElement("div")
+    row.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:flex-end;"
+
+    const mkThemeCol = (bg: string, border: string, label: string, suffix: string) => {
+      const col = document.createElement("div")
+      col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px;"
+      col.appendChild(makeSvgBox(svgHtml, bg, border, `vdp_blob_${seq}_${suffix}`, mbw))
+      const lbl = document.createElement("span")
+      lbl.textContent = label
+      lbl.style.cssText = [
+        "font-size:11px;",
+        "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+      ].join("")
+      col.appendChild(lbl)
+      return col
+    }
+
+    // light / dark の SVG プレビューは意図的に固定色（テーマ確認用）
+    row.appendChild(mkThemeCol("#ffffff", "#d0d7de", "light", "l"))
+    row.appendChild(mkThemeCol("#0d1117", "#30363d", "dark", "d"))
+    body.appendChild(row)
+
+    const dims = parseSvgAspectRatio(svgHtml)
+    if (dims) {
+      const d = document.createElement("div")
+      d.textContent = `${Math.round(dims.w)} × ${Math.round(dims.h)} dp`
+      d.style.cssText = [
+        "text-align:center;font-size:11px;margin-top:8px;",
+        "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+      ].join("")
+      body.appendChild(d)
+    }
+  }
+
+  panel.appendChild(body)
+  anchor.insertAdjacentElement(position, panel)
+
+  const w = panel.getBoundingClientRect().width || 800
+  buildBody(w)
+
+  if (typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) buildBody(entry.contentRect.width)
+    })
+    ro.observe(panel)
+  }
 }

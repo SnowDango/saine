@@ -198,6 +198,29 @@ describe("vectorDrawableToSvg", () => {
     expect(svg).toContain('fill="none"')
   })
 
+  it("<animated-vector> のインライン <vector> を変換できる", () => {
+    const xml = `
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+  <aapt:attr name="android:drawable">
+    <vector
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24"
+        android:viewportHeight="24">
+      <path android:fillColor="#FF0000" android:pathData="M12,2L2,22h20z"/>
+    </vector>
+  </aapt:attr>
+</animated-vector>`
+    expect(isAndroidVectorDrawable(xml)).toBe(true)
+    const svg = vectorDrawableToSvg(xml)
+    expect(svg).not.toBeNull()
+    expect(svg).toContain('viewBox="0 0 24 24"')
+    expect(svg).toContain('width="24"')
+    expect(svg).toContain('height="24"')
+    expect(svg).toContain('fill="#FF0000"')
+  })
+
   it("不正な XML は null を返す", () => {
     expect(vectorDrawableToSvg("not xml at all")).toBeNull()
   })

@@ -1,9 +1,19 @@
-import type { PrUrlInfo, PrRefs } from "./types"
+import type { PrUrlInfo, PrRefs, BlobUrlInfo } from "./types"
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
 export function isPrPage(url: string): boolean {
   return /github\.com\/[^/]+\/[^/]+\/pull\/\d+/.test(url)
+}
+
+export function isBlobPage(url: string): boolean {
+  return /github\.com\/[^/]+\/[^/]+\/blob\//.test(url)
+}
+
+export function parseBlobUrlInfo(url: string): BlobUrlInfo | null {
+  // Note: branch names containing "/" are resolved to the first segment only.
+  const m = url.match(/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/([^?#]+)/)
+  return m ? { org: m[1], repo: m[2], ref: m[3], path: m[4] } : null
 }
 
 const DRAWABLE_RE = /drawable/i

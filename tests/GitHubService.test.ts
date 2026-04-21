@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest"
 import {
   isPrPage,
+  isBlobPage,
   isDrawableXml,
   parsePrUrlInfo,
+  parseBlobUrlInfo,
   getFilePath,
   getDiffContent,
 } from "~contents/models/GitHubService"
@@ -23,6 +25,49 @@ describe("isPrPage", () => {
     expect(isPrPage("https://github.com/user/repo/pulls")).toBe(false)
     expect(isPrPage("https://example.com/pull/1")).toBe(false)
     expect(isPrPage("")).toBe(false)
+  })
+})
+
+// ─── isBlobPage ──────────────────────────────────────────────────────────────
+
+describe("isBlobPage", () => {
+  it("Blob ページの URL を検出する", () => {
+    expect(isBlobPage("https://github.com/user/repo/blob/main/path/to/file.xml")).toBe(true)
+    expect(isBlobPage("https://github.com/org/repo/blob/v1.2.3/src/icon.xml")).toBe(true)
+    expect(isBlobPage("https://github.com/org/repo/blob/abc123/file.xml")).toBe(true)
+  })
+
+  it("Blob ページでない URL は false を返す", () => {
+    expect(isBlobPage("https://github.com/user/repo")).toBe(false)
+    expect(isBlobPage("https://github.com/user/repo/pull/1")).toBe(false)
+    expect(isBlobPage("https://github.com/user/repo/tree/main")).toBe(false)
+    expect(isBlobPage("https://example.com/blob/main/file.xml")).toBe(false)
+    expect(isBlobPage("")).toBe(false)
+  })
+})
+
+// ─── parseBlobUrlInfo ─────────────────────────────────────────────────────────
+
+describe("parseBlobUrlInfo", () => {
+  it("Blob URL から org/repo/ref/path を抽出する", () => {
+    const result = parseBlobUrlInfo("https://github.com/org/repo/blob/main/app/res/drawable/icon.xml")
+    expect(result).toEqual({ org: "org", repo: "repo", ref: "main", path: "app/res/drawable/icon.xml" })
+  })
+
+  it("タグ名 (v1.2.3) のリファレンスも正しく抽出する", () => {
+    const result = parseBlobUrlInfo("https://github.com/org/repo/blob/v1.2.3/src/icon.xml")
+    expect(result).toEqual({ org: "org", repo: "repo", ref: "v1.2.3", path: "src/icon.xml" })
+  })
+
+  it("クエリパラメータを含む URL でも正しく抽出する", () => {
+    const result = parseBlobUrlInfo("https://github.com/org/repo/blob/main/icon.xml?plain=1")
+    expect(result).toEqual({ org: "org", repo: "repo", ref: "main", path: "icon.xml" })
+  })
+
+  it("Blob URL でなければ null を返す", () => {
+    expect(parseBlobUrlInfo("https://github.com/org/repo")).toBeNull()
+    expect(parseBlobUrlInfo("https://github.com/org/repo/pull/1")).toBeNull()
+    expect(parseBlobUrlInfo("")).toBeNull()
   })
 })
 

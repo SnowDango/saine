@@ -384,8 +384,10 @@ export function renderBlobPanel(container: Element, svgHtml: string): void {
 
   const panel = document.createElement("div")
   panel.setAttribute("data-vdp-panel", "1")
+  // flex:0 0 100% と width:100% で親が d-flex flex-row でも全幅占有して先頭に来る
   panel.style.cssText =
-    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;border-bottom:1px solid #d0d7de;"
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;" +
+    "border-bottom:1px solid #d0d7de;width:100%;flex:0 0 100%;order:-1;"
 
   // ── Header ──
   const headerBar = document.createElement("div")
@@ -439,6 +441,10 @@ export function renderBlobPanel(container: Element, svgHtml: string): void {
   }
 
   panel.appendChild(body)
+  // 親が flex-row の場合に次の兄弟が下へ折り返すよう flex-wrap:wrap を強制する
+  if (container instanceof HTMLElement) {
+    container.style.flexWrap = "wrap"
+  }
   container.prepend(panel)
 
   const w = panel.getBoundingClientRect().width || 800

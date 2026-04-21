@@ -12,6 +12,13 @@ export interface PrUrlInfo {
   prNumber: string
 }
 
+export interface BlobUrlInfo {
+  org: string
+  repo: string
+  ref: string
+  path: string
+}
+
 export interface PrRefs {
   base: string | null
   head: string | null

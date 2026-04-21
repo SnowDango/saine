@@ -46,7 +46,9 @@ export async function processBlobPage(): Promise<boolean> {
     if (!isExtensionValid()) return true
 
     const headSvg = vectorDrawableToSvg(raw)
-    renderBlobPanel(container, headSvg)
+    // div.d-flex.flex-row がアンカーの祖先にあればそこへ、なければアンカーの親へ prepend
+    const target = container.closest("div.d-flex.flex-row") ?? container.parentElement ?? container
+    renderBlobPanel(target, headSvg)
     return false
   } catch (err) {
     if (isContextInvalidated(err)) return true

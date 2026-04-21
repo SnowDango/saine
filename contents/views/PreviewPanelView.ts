@@ -439,7 +439,7 @@ export function renderBlobPanel(container: Element, svgHtml: string): void {
   }
 
   panel.appendChild(body)
-  container.insertAdjacentElement("beforebegin", panel)
+  container.prepend(panel)
 
   const w = panel.getBoundingClientRect().width || 800
   buildBody(w)

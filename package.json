@@ -1,7 +1,7 @@
 {
   "name": "saine",
   "displayName": "Saine",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Android Vector Preview on Github",
   "author": "SnowDango",
   "scripts": {
@@ -42,6 +42,7 @@
     "vitest": "^4.1.4"
   },
   "manifest": {
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA41v7NL2dZ5Id/R0uyF1+6hGeF2QPPj77fySGuKw/+gdrVjc1+sTtHW79ow/BZHQcPL2s42nyNweIrI1ktgd5Zo4BN/sNABY5BnjESrUI0eNjLxlyhiVMhb/tPq8YufWVgscmgidM7n2cYgHW2h8D2ZP7Azmgnpl690UfRa0ZpoAWI1/IvNGOafEHQaO5vpNWfIxmq01Hdd3Q+56cOBmoXPcxHe652HVkkdTEYffzT14WeHc0jVrixFbquV05JDfhCUmmcLzu5fqTmrHVPEIfAdklVhQUwkEwygYsg1U24SsQ2rhIj17TWDcRJxTLGbaMhJVZgFWi/aOHZ7c9tpfa8wIDAQAB",
     "default_locale": "en",
     "host_permissions": [
       "https://*/*"

@@ -23,6 +23,9 @@ const PROCESSED_ATTR = "data-vdp-done"
 const FILE_CONTAINER_SELECTOR = ".file, [data-tagsearch-path], [data-diff-anchor]"
 const BLOB_PROCESSED_ATTR = "data-vdp-blob-done"
 const BLOB_CONTENT_SELECTORS = [
+  "[data-selector='repos-split-pane-content']",
+  "react-app[app-name='code-view']",
+  "[data-target='react-app.reactRoot']",
   "[data-target='blob.content']",
   ".react-code-file-content",
   ".blob-wrapper",

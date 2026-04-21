@@ -35,6 +35,9 @@
   "panelTitle": {
     "message": "Image Diff"
   },
+  "blobPanelTitle": {
+    "message": "Image Preview"
+  },
   "diffTruncated": {
     "message": "Diff is truncated — expand all lines for a complete preview"
   },

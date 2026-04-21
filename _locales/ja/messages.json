@@ -35,6 +35,9 @@
   "panelTitle": {
     "message": "Image Diff"
   },
+  "blobPanelTitle": {
+    "message": "Image Preview"
+  },
   "diffTruncated": {
     "message": "差分が省略されています — すべて展開するとプレビューが完全になります"
   },

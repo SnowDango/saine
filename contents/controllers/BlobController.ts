@@ -8,6 +8,7 @@ import { isContextInvalidated, isExtensionValid } from "./extensionContext"
 
 const BLOB_PROCESSED_ATTR = "data-vdp-blob-done"
 const BLOB_CONTENT_SELECTORS = [
+  ".react-code-size-details-banner",     // 最終コミット直後・コード直前の安定したセレクター
   "[data-selector='repos-split-pane-content']",
   "react-app[app-name='code-view']",
   "[data-target='react-app.reactRoot']",

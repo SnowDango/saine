@@ -35,3 +35,15 @@ export interface PreviewData {
   isComplete: boolean
 }
 
+export interface SelectorStateItem {
+  stateLabel: string
+  svg: string | null
+  imageUrl: string | null
+}
+
+export interface SelectorPreviewData {
+  changeType: ChangeType
+  baseStates: SelectorStateItem[] | null
+  headStates: SelectorStateItem[] | null
+}
+

@@ -1,18 +1,20 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { parseVersionsFromDiff } from "../models/DiffParser"
+import { parseVersionsFromDiff } from "../utils/DiffParser"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { getDiffContent, getFilePath } from "../repositories/PageDomReader"
+import { findHeadShaFromContainer } from "../repositories/PageDomReader"
 import {
-  clearPrRefsCache,
-  fetchRawGithub,
-  findHeadShaFromContainer,
-  getDiffContent,
-  getFilePath,
+  extractModuleResPrefix,
+  findDrawableInModule,
+  isAndroidSelector,
   isDrawableXml,
-  parsePrUrlInfo,
-  resolvePrRefs,
-} from "../models/GitHubService"
-import type { ChangeType, PreviewData } from "../models/types"
-import { removePanel, renderPanel } from "../views/PreviewPanelView"
+  parseSelectorItems,
+} from "../services/DrawableService"
+import { clearPrRefsCache, resolvePrRefs } from "../services/PrRefsService"
+import { parsePrUrlInfo } from "../utils/UrlUtils"
+import type { ChangeType, PreviewData, SelectorStateItem } from "../models/types"
+import { removePanel, renderPanel, renderSelectorPanel } from "../views/PreviewPanelView"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -21,6 +23,11 @@ export const FILE_CONTAINER_SELECTOR = ".file, [data-tagsearch-path], [data-diff
 
 // ─── File container processing ────────────────────────────────────────────────
 
+/**
+ * 単一のファイルコンテナを処理してプレビューパネルを挿入する。
+ * drawable XML でなければ何もしない。二重処理防止のため PROCESSED_ATTR を付与する。
+ * Vector Drawable と Selector XML の両方に対応し、before/after の差分を可視化する。
+ */
 async function processFileContainer(container: Element): Promise<void> {
   if (container.hasAttribute(PROCESSED_ATTR)) return
 
@@ -32,21 +39,31 @@ async function processFileContainer(container: Element): Promise<void> {
 
     let before: string | null = null
     let after: string | null = null
+    let resolvedBaseRef: string | null = null
+    let resolvedHeadRef: string | null = null
 
     // 1. Primary: commit SHA でフルファイルを取得 (ブランチ削除後・private repo でも動作)
     const prInfo = parsePrUrlInfo(location.href)
     if (prInfo) {
       const prRefs = await resolvePrRefs(prInfo.org, prInfo.repo, prInfo.prNumber)
-      const baseRef = prRefs.baseSha ?? prRefs.base
-      const headRef = prRefs.headSha ?? findHeadShaFromContainer(container, filePath)
+      resolvedBaseRef = prRefs.baseSha ?? prRefs.base
+      // コンテナ内の "View file" リンクSHAを最優先する。
+      // マージ済みPRではこのリンクがマージコミットSHAを指すため、
+      // ブランチ削除後でも drawables を正確に解決できる。
+      const containerHeadSha = findHeadShaFromContainer(container, filePath)
+      resolvedHeadRef = containerHeadSha ?? prRefs.headSha ?? prRefs.head ?? null
 
-      if (baseRef && headRef && baseRef !== headRef) {
+      if ((resolvedBaseRef || resolvedHeadRef) && resolvedBaseRef !== resolvedHeadRef) {
         const [fetchedBefore, fetchedAfter] = await Promise.all([
-          fetchRawGithub(prInfo.org, prInfo.repo, baseRef, filePath),
-          fetchRawGithub(prInfo.org, prInfo.repo, headRef, filePath),
+          resolvedBaseRef
+            ? fetchRawGithub(prInfo.org, prInfo.repo, resolvedBaseRef, filePath)
+            : Promise.resolve(null),
+          resolvedHeadRef
+            ? fetchRawGithub(prInfo.org, prInfo.repo, resolvedHeadRef, filePath)
+            : Promise.resolve(null),
         ])
-        before = fetchedBefore && isAndroidVectorDrawable(fetchedBefore) ? fetchedBefore : null
-        after = fetchedAfter && isAndroidVectorDrawable(fetchedAfter) ? fetchedAfter : null
+        before = fetchedBefore
+        after = fetchedAfter
 
         if (before !== null && after !== null && before === after) {
           console.warn("[VDP] fetched base === head content, clearing")
@@ -58,25 +75,61 @@ async function processFileContainer(container: Element): Promise<void> {
 
     // 2. Fallback: diff から部分的に復元
     if (before === null && after === null) {
-      const { before: diffBefore, after: diffAfter } = parseVersionsFromDiff(container)
-      const isDiffBeforeVd = diffBefore ? isAndroidVectorDrawable(diffBefore) : false
-      const isDiffAfterVd = diffAfter ? isAndroidVectorDrawable(diffAfter) : false
+      const parsed = parseVersionsFromDiff(container)
+      const isDiffBeforeVd = parsed.before ? isAndroidVectorDrawable(parsed.before) : false
+      const isDiffAfterVd = parsed.after ? isAndroidVectorDrawable(parsed.after) : false
       if (isDiffBeforeVd || isDiffAfterVd) {
-        before = isDiffBeforeVd ? diffBefore : null
-        after = isDiffAfterVd ? diffAfter : null
+        before = isDiffBeforeVd ? parsed.before : null
+        after = isDiffAfterVd ? parsed.after : null
       }
     }
 
     if (!document.contains(container)) return
     if (before === null && after === null) return
 
-    const baseSvg = before ? vectorDrawableToSvg(before) : null
-    const headSvg = after ? vectorDrawableToSvg(after) : null
     const changeType: ChangeType =
       before === null ? "added" : after === null ? "deleted" : "modified"
-
-    const data: PreviewData = { baseSvg, headSvg, changeType, isComplete: true }
     const diffContent = getDiffContent(container)
+
+    // 3. Selector preview
+    if ((before && isAndroidSelector(before)) || (after && isAndroidSelector(after))) {
+      if (!prInfo) return
+
+      const resPrefix = extractModuleResPrefix(filePath)
+
+      const buildStates = async (
+        selectorXml: string | null,
+        ref: string | null
+      ): Promise<SelectorStateItem[] | null> => {
+        if (!selectorXml || !ref) return null
+        const parsed = parseSelectorItems(selectorXml)
+        return Promise.all(
+          parsed.map(async (item) => {
+            const result = await findDrawableInModule(prInfo.org, prInfo.repo, ref, resPrefix, item.drawableName)
+            const svg = result.xml && isAndroidVectorDrawable(result.xml) ? vectorDrawableToSvg(result.xml) : null
+            return { stateLabel: item.stateLabel, svg, imageUrl: result.imageUrl }
+          })
+        )
+      }
+
+      const [baseStates, headStates] = await Promise.all([
+        buildStates(before, resolvedBaseRef),
+        buildStates(after, resolvedHeadRef),
+      ])
+
+      if (!document.contains(container)) return
+      renderSelectorPanel(container, diffContent, { changeType, baseStates, headStates })
+      return
+    }
+
+    // 4. Vector drawable preview
+    const isBeforeVd = before !== null && isAndroidVectorDrawable(before)
+    const isAfterVd = after !== null && isAndroidVectorDrawable(after)
+    if (!isBeforeVd && !isAfterVd) return
+
+    const baseSvg = isBeforeVd ? vectorDrawableToSvg(before!) : null
+    const headSvg = isAfterVd ? vectorDrawableToSvg(after!) : null
+    const data: PreviewData = { baseSvg, headSvg, changeType, isComplete: true }
     renderPanel(container, diffContent, data)
   } catch (err) {
     console.warn("[VDP] error:", err)
@@ -85,12 +138,20 @@ async function processFileContainer(container: Element): Promise<void> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * ページ上のすべてのファイルコンテナを走査してプレビューを挿入する。
+ * ページロード時や CLEAR_CACHE メッセージ受信後の再スキャンに使う。
+ */
 export function scanPage(): void {
   document.querySelectorAll<Element>(FILE_CONTAINER_SELECTOR).forEach((c) => {
     processFileContainer(c).catch((err) => console.warn("[VDP] scan error:", err))
   })
 }
 
+/**
+ * MutationObserver のコールバック。新たに追加されたノードを検査し、
+ * ファイルコンテナが含まれていればプレビューを挿入する。
+ */
 export function handleMutations(mutations: MutationRecord[]): void {
   for (const mut of mutations) {
     for (const node of mut.addedNodes) {
@@ -105,6 +166,10 @@ export function handleMutations(mutations: MutationRecord[]): void {
   }
 }
 
+/**
+ * 挿入済みのすべてのプレビューパネルを削除し、処理済みフラグをリセットする。
+ * PAT 変更時や CLEAR_CACHE メッセージ受信後に呼ばれる。
+ */
 export function clearPanels(): void {
   clearPrRefsCache()
   document.querySelectorAll<Element>(`[${PROCESSED_ATTR}]`).forEach((el) => {

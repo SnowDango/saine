@@ -1,6 +1,8 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { fetchRawGithub, isDrawableXml, parseBlobUrlInfo } from "../models/GitHubService"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { isDrawableXml } from "../services/DrawableService"
+import { parseBlobUrlInfo } from "../utils/UrlUtils"
 import { renderBlobPanel } from "../views/PreviewPanelView"
 import { isContextInvalidated, isExtensionValid } from "./extensionContext"
 
@@ -30,6 +32,11 @@ const BLOB_ANCHOR_SELECTORS = [
  * 現在の blob ページを処理してプレビューを挿入する。
  * Extension context が無効化された場合は true を返す。
  */
+/**
+ * 現在の blob ページを処理してプレビューパネルを挿入する。
+ * drawable XML でなければ何もしない。
+ * Extension context が無効化された場合は true、それ以外は false を返す。
+ */
 export async function processBlobPage(): Promise<boolean> {
   if (!isExtensionValid()) return true
 
@@ -38,14 +45,11 @@ export async function processBlobPage(): Promise<boolean> {
     if (!blobInfo || !isDrawableXml(blobInfo.path)) return false
 
     // ── 最終コミットボックスを探す ──
-    // [data-testid="latest-commit"] が React でレンダリングされるまで待つ
     const commitEl = document.querySelector("[data-testid='latest-commit']")
     if (!commitEl) {
-      // まだ React がレンダリングしていない → MutationObserver の次回呼び出しに委ねる
       return false
     }
 
-    // 処理済みチェック（commitEl 自体にマーカーを付ける）
     if (commitEl.hasAttribute(BLOB_PROCESSED_ATTR)) return false
     commitEl.setAttribute(BLOB_PROCESSED_ATTR, "1")
 
@@ -57,21 +61,18 @@ export async function processBlobPage(): Promise<boolean> {
     const headSvg = vectorDrawableToSvg(raw)
 
     // ── 挿入位置の決定 ──
-    // 優先①: コード直前の安定したバナー要素の手前（= コミットボックスとコードの間）
     const sizeBanner = document.querySelector<HTMLElement>(".react-code-size-details-banner")
     if (sizeBanner) {
       renderBlobPanel(sizeBanner, headSvg, "beforebegin")
       return false
     }
 
-    // 優先②: commitEl の最近傍 .border.rounded-2 祖先（コミット外枠ボックス）の直後
     const commitBox = commitEl.closest<HTMLElement>(".border.rounded-2")
     if (commitBox) {
       renderBlobPanel(commitBox, headSvg, "afterend")
       return false
     }
 
-    // フォールバック: アンカー要素の直前に挿入
     for (const sel of BLOB_ANCHOR_SELECTORS) {
       const anchor = document.querySelector<HTMLElement>(sel)
       if (anchor) {

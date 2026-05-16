@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest"
-import { isPrPage, isBlobPage, parsePrUrlInfo, parseBlobUrlInfo } from "~contents/models/UrlUtils"
-import { isDrawableXml, extractModuleResPrefix } from "~contents/models/DrawableService"
-import { getFilePath, getDiffContent, findHeadShaFromContainer, extractPrOidsFromPage } from "~contents/models/PageDomReader"
+import { isPrPage, isBlobPage, parsePrUrlInfo, parseBlobUrlInfo } from "~contents/utils/UrlUtils"
+import { isDrawableXml, extractModuleResPrefix } from "~contents/services/DrawableService"
+import { getFilePath, getDiffContent, findHeadShaFromContainer, extractPrOidsFromPage } from "~contents/repositories/PageDomReader"
 
 // ─── isPrPage ─────────────────────────────────────────────────────────────────
 

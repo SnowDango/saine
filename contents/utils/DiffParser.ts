@@ -1,4 +1,4 @@
-import type { ParsedVersions } from "./types"
+import type { ParsedVersions } from "../models/types"
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 //

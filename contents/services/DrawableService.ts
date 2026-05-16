@@ -1,4 +1,4 @@
-import { bgFetch, fetchRawGithub, getStoredPat } from "./GitHubApi"
+import { bgFetch, fetchRawGithub, getStoredPat } from "../repositories/GitHubApi"
 
 // ─── Drawable XML detection ───────────────────────────────────────────────────
 

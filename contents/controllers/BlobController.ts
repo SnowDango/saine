@@ -1,8 +1,8 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { fetchRawGithub } from "../models/GitHubApi"
-import { isDrawableXml } from "../models/DrawableService"
-import { parseBlobUrlInfo } from "../models/UrlUtils"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { isDrawableXml } from "../services/DrawableService"
+import { parseBlobUrlInfo } from "../utils/UrlUtils"
 import { renderBlobPanel } from "../views/PreviewPanelView"
 import { isContextInvalidated, isExtensionValid } from "./extensionContext"
 

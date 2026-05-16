@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseVersionsFromDiff } from "~contents/models/DiffParser"
+import { parseVersionsFromDiff } from "~contents/utils/DiffParser"
 
 // ─── Helper: GitHub /files view (unified diff) の DOM を構築 ──────────────────
 

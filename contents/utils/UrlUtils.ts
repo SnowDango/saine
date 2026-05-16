@@ -1,4 +1,4 @@
-import type { BlobUrlInfo, PrUrlInfo } from "./types"
+import type { BlobUrlInfo, PrUrlInfo } from "../models/types"
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 

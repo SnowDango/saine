@@ -1,7 +1,7 @@
-import type { PrRefs } from "./types"
-import { bgFetch, getStoredPat } from "./GitHubApi"
+import type { PrRefs } from "../models/types"
+import { bgFetch, getStoredPat } from "../repositories/GitHubApi"
 import { clearDrawableServiceCaches } from "./DrawableService"
-import { extractPrOidsFromPage, findMergeCommitShaFromDom } from "./PageDomReader"
+import { extractPrOidsFromPage, findMergeCommitShaFromDom } from "../repositories/PageDomReader"
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
 

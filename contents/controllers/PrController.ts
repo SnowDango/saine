@@ -1,18 +1,18 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { parseVersionsFromDiff } from "../models/DiffParser"
-import { fetchRawGithub } from "../models/GitHubApi"
-import { getDiffContent, getFilePath } from "../models/PageDomReader"
-import { findHeadShaFromContainer } from "../models/PageDomReader"
+import { parseVersionsFromDiff } from "../utils/DiffParser"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { getDiffContent, getFilePath } from "../repositories/PageDomReader"
+import { findHeadShaFromContainer } from "../repositories/PageDomReader"
 import {
   extractModuleResPrefix,
   findDrawableInModule,
   isAndroidSelector,
   isDrawableXml,
   parseSelectorItems,
-} from "../models/DrawableService"
-import { clearPrRefsCache, resolvePrRefs } from "../models/PrRefsService"
-import { parsePrUrlInfo } from "../models/UrlUtils"
+} from "../services/DrawableService"
+import { clearPrRefsCache, resolvePrRefs } from "../services/PrRefsService"
+import { parsePrUrlInfo } from "../utils/UrlUtils"
 import type { ChangeType, PreviewData, SelectorStateItem } from "../models/types"
 import { removePanel, renderPanel, renderSelectorPanel } from "../views/PreviewPanelView"
 

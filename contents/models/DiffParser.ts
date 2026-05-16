@@ -6,24 +6,32 @@ import type { ParsedVersions } from "./types"
 //                diff table は table.diff-table / .js-diff-table
 //                行マーカー  は span[data-code-marker]
 //
-// /changes view : file container は [data-diff-anchor] (diff table そのもの)
-//                 行構造は <tr> + <td[data-diff-side]> + <code class="diff-text">
-//                 行タイプは code.textContent の先頭文字 (- / + / それ以外)
+// /changes view (新) : file container は [data-diff-anchor] (diff table そのもの)
+//                      行構造は <tr> + 行番号 td × 2 + td.diff-text-cell (常に right side)
+//                      行タイプは行番号セルの有無で判定 (left有=before, right有=after)
+//                      hunk header は <code class="diff-text-cell hunk">
+//
+// /changes view (旧) : file container は [data-diff-anchor] (diff table そのもの)
+//                      行構造は <tr> + <td[data-diff-side]>.diff-text-cell × 1〜2
+//                      行タイプは code.textContent の先頭文字 (- / + / それ以外)
 
 // ─── /changes view diff parser ────────────────────────────────────────────────
 
 function getChangesViewCellCode(cell: HTMLElement): string | null {
-  const codeEl = cell.querySelector("code.diff-text")
+  const codeEl = cell.querySelector<HTMLElement>("code.diff-text")
   if (!codeEl) return null
-  const text = codeEl.textContent ?? ""
-  return text === "" ? null : text
+  // 新 DOM: code > div.diff-text-inner にテキストが入っている
+  const inner = codeEl.querySelector<HTMLElement>(".diff-text-inner")
+  return (inner ?? codeEl).textContent ?? ""
 }
 
 function parseChangesViewDiff(table: Element): ParsedVersions {
   const rows = table.querySelectorAll<HTMLElement>("tr")
   if (rows.length === 0) return { before: null, after: null, isComplete: false }
 
-  const hunkHeaders = table.querySelectorAll("td[colspan='4']")
+  // 新 DOM: hunk header は <code class="diff-text-cell hunk">
+  // 旧 DOM: hunk header は <td colspan="4">
+  const hunkHeaders = table.querySelectorAll("code.diff-text-cell.hunk, td[colspan='4']")
   const isComplete = hunkHeaders.length <= 1
 
   const beforeLines: string[] = []
@@ -31,10 +39,38 @@ function parseChangesViewDiff(table: Element): ParsedVersions {
 
   for (const row of rows) {
     if (row.querySelector("th")) continue
-    if (row.querySelector("td[colspan='4']")) continue
-    const cells = row.querySelectorAll("td:not([aria-hidden])")
-    if (cells.length === 0) continue
+    if (row.querySelector("code.diff-text-cell.hunk, td[colspan='4']")) continue
 
+    // ── 新 /changes view: 1行につき td.diff-text-cell が1つだけ存在 ──
+    const textCell = row.querySelector<HTMLElement>("td.diff-text-cell")
+    if (textCell) {
+      const text = getChangesViewCellCode(textCell)
+      if (text !== null) {
+        // 行番号セルの有無で行タイプを判定
+        //   left に番号あり  → before に含まれる行 (削除行 or 変更なし)
+        //   right に番号あり → after  に含まれる行 (追加行 or 変更なし)
+        const leftNumCell = row.querySelector<HTMLElement>(
+          "td[data-diff-side=left]:not(.diff-text-cell)"
+        )
+        const rightNumCell = row.querySelector<HTMLElement>(
+          "td[data-diff-side=right]:not(.diff-text-cell)"
+        )
+        const hasLeft =
+          leftNumCell !== null &&
+          !leftNumCell.hasAttribute("aria-hidden") &&
+          (leftNumCell.textContent?.trim() ?? "") !== ""
+        const hasRight =
+          rightNumCell !== null &&
+          !rightNumCell.hasAttribute("aria-hidden") &&
+          (rightNumCell.textContent?.trim() ?? "") !== ""
+
+        if (hasLeft) beforeLines.push(text)
+        if (hasRight) afterLines.push(text)
+      }
+      continue
+    }
+
+    // ── 旧 /changes view: left/right で別々の td.diff-text-cell が存在 ──
     const leftCell = row.querySelector<HTMLElement>(
       "td[data-diff-side=left].diff-text-cell"
     )

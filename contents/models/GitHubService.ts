@@ -61,6 +61,39 @@ export function getDiffContent(container: Element): HTMLElement | null {
 
 // ─── HEAD ref heuristic from DOM blob links ───────────────────────────────────
 
+const SHA_RE = /^[0-9a-f]{40}$/
+
+/**
+ * コンテナ内の blob リンクから HEAD commit SHA を探す。
+ * GitHub PR の "Files changed" ビューでは "View file" リンク
+ * (/blob/{headCommitSHA}/{path}) がコンテナ内に存在する。
+ * private リポジトリなど API が利用できない場合の fallback として使用する。
+ */
+export function findHeadShaFromContainer(container: Element, filePath: string | null): string | null {
+  for (const a of container.querySelectorAll<HTMLAnchorElement>("a[href*='/blob/']")) {
+    const href = a.getAttribute("href") ?? ""
+    const blobIdx = href.indexOf("/blob/")
+    if (blobIdx < 0) continue
+    const afterBlob = href.slice(blobIdx + 6)
+
+    if (filePath) {
+      const suffix = "/" + filePath
+      if (afterBlob.endsWith(suffix)) {
+        const ref = afterBlob.slice(0, -suffix.length)
+        if (SHA_RE.test(ref)) return ref
+      }
+      const encodedSuffix = "/" + filePath.split("/").map(encodeURIComponent).join("/")
+      if (afterBlob.endsWith(encodedSuffix)) {
+        const ref = afterBlob.slice(0, -encodedSuffix.length)
+        if (SHA_RE.test(ref)) return ref
+      }
+    }
+    const m = afterBlob.match(/^([0-9a-f]{40})\//)
+    if (m?.[1]) return m[1]
+  }
+  return null
+}
+
 export function findHeadRefFromContainer(container: Element, filePath: string | null): string | null {
   let el: Element | null = container.parentElement
   for (let depth = 0; depth < 15; depth++) {
@@ -88,6 +121,51 @@ export function findHeadRefFromContainer(container: Element, filePath: string | 
     el = el.parentElement
   }
   return null
+}
+
+// ─── Commit OID extraction from embedded page JSON ───────────────────────────
+
+interface PageOids {
+  baseOid: string | null
+  headOid: string | null
+}
+
+export function extractPrOidsFromPage(): PageOids {
+  for (const script of document.querySelectorAll<HTMLScriptElement>('script[type="application/json"]')) {
+    try {
+      const data = JSON.parse(script.textContent ?? "")
+      const payload = data?.payload
+      if (!payload) continue
+
+      // /changes view: pullRequestsChangesRoute.comparison.fullDiff
+      const changesRoute = payload.pullRequestsChangesRoute
+      if (changesRoute?.comparison?.fullDiff) {
+        const { baseOid, headOid } = changesRoute.comparison.fullDiff
+        if (baseOid && headOid) return { baseOid, headOid }
+      }
+
+      // /files view: pullRequestsFilesRoute.comparison.fullDiff
+      const filesRoute = payload.pullRequestsFilesRoute
+      if (filesRoute?.comparison?.fullDiff) {
+        const { baseOid, headOid } = filesRoute.comparison.fullDiff
+        if (baseOid && headOid) return { baseOid, headOid }
+      }
+
+      // layout route: pullRequestsLayoutRoute.pullRequest.comparison
+      const layoutRoute = payload.pullRequestsLayoutRoute
+      if (layoutRoute?.pullRequest?.comparison) {
+        const { baseOid, headOid } = layoutRoute.pullRequest.comparison
+        if (baseOid && headOid) return { baseOid, headOid }
+      }
+
+      // diffContents 内の oldCommitOid/newCommitOid (変化がある場合)
+      const firstDiff = changesRoute?.diffContents?.[0]
+      if (firstDiff?.oldCommitOid && firstDiff?.newCommitOid) {
+        return { baseOid: firstDiff.oldCommitOid, headOid: firstDiff.newCommitOid }
+      }
+    } catch { /* skip */ }
+  }
+  return { baseOid: null, headOid: null }
 }
 
 // ─── PR refs resolution (base / head branches) ───────────────────────────────
@@ -202,18 +280,26 @@ async function doResolvePrRefs(
   const treeBase = seen[0] ?? null
   const treeHead = seen[1] ?? null
 
-  // 4. API 結果を待つ (commit SHA を必ず取得する)
+  // 4. ページ埋め込み JSON から commit SHA を抽出 (private repo でも動作)
+  const pageOids = extractPrOidsFromPage()
+
+  // 5. API 結果を待つ (public repo では SHA が取得できる)
   const apiRefs = await apiPromise
 
-  if (!apiRefs && !domBase && !domHead && !compareBase && !compareHead && !treeBase && !treeHead) {
+  const baseSha = pageOids.baseOid ?? apiRefs?.baseSha ?? null
+  const headSha = pageOids.headOid ?? apiRefs?.headSha ?? null
+
+  if (!baseSha && !headSha && !domBase && !domHead && !compareBase && !compareHead && !treeBase && !treeHead) {
     console.warn(`[VDP] refs not found for ${org}/${repo}#${prNumber}`)
   }
+
+  console.log(`[VDP] refs resolved: baseSha=${baseSha?.slice(0, 7)} headSha=${headSha?.slice(0, 7)} (pageOids=${!!pageOids.baseOid} api=${!!apiRefs})`)
 
   return {
     base: domBase ?? compareBase ?? treeBase ?? apiRefs?.base ?? null,
     head: domHead ?? compareHead ?? treeHead ?? apiRefs?.head ?? null,
-    baseSha: apiRefs?.baseSha ?? null,
-    headSha: apiRefs?.headSha ?? null,
+    baseSha,
+    headSha,
   }
 }
 

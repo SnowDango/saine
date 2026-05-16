@@ -110,11 +110,40 @@ export function clearPrRefsCache(key?: string): void {
   }
 }
 
+interface ApiPrRefs {
+  base: string | null
+  head: string | null
+  baseSha: string | null
+  headSha: string | null
+}
+
+async function fetchPrRefsFromApi(org: string, repo: string, prNumber: string): Promise<ApiPrRefs | null> {
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${org}/${repo}/pulls/${prNumber}`,
+      { headers: { Accept: "application/vnd.github.v3+json" } }
+    )
+    if (resp.ok) {
+      const data = await resp.json()
+      return {
+        base: (data.base?.ref as string | undefined) ?? null,
+        head: (data.head?.ref as string | undefined) ?? null,
+        baseSha: (data.base?.sha as string | undefined) ?? null,
+        headSha: (data.head?.sha as string | undefined) ?? null,
+      }
+    }
+  } catch { /* ネットワークエラーは無視 */ }
+  return null
+}
+
 async function doResolvePrRefs(
   org: string,
   repo: string,
   prNumber: string
 ): Promise<PrRefs> {
+  // API を DOM 解析と並行して開始 (commit SHA 取得のため常に実行)
+  const apiPromise = fetchPrRefsFromApi(org, repo, prNumber)
+
   // 1. DOM セレクター
   let domBase: string | null = null
   let domHead: string | null = null
@@ -134,8 +163,6 @@ async function doResolvePrRefs(
     }
     if (domHead) break
   }
-
-  if (domBase && domHead) return { base: domBase, head: domHead }
 
   // 2. compare リンク
   let compareBase: string | null = null
@@ -175,30 +202,19 @@ async function doResolvePrRefs(
   const treeBase = seen[0] ?? null
   const treeHead = seen[1] ?? null
 
-  const resolvedBase = domBase ?? compareBase ?? treeBase
-  const resolvedHead = domHead ?? compareHead ?? treeHead
+  // 4. API 結果を待つ (commit SHA を必ず取得する)
+  const apiRefs = await apiPromise
 
-  if (resolvedBase && resolvedHead) return { base: resolvedBase, head: resolvedHead }
-
-  // 4. GitHub API
-  try {
-    const resp = await fetch(
-      `https://api.github.com/repos/${org}/${repo}/pulls/${prNumber}`,
-      { headers: { Accept: "application/vnd.github.v3+json" } }
-    )
-    if (resp.ok) {
-      const data = await resp.json()
-      const apiBase = data.base?.ref as string | undefined
-      const apiHead = data.head?.ref as string | undefined
-      if (apiBase || apiHead) return { base: apiBase ?? resolvedBase, head: apiHead ?? resolvedHead }
-    }
-  } catch { /* ネットワークエラーは無視 */ }
-
-  if (!resolvedBase && !resolvedHead) {
+  if (!apiRefs && !domBase && !domHead && !compareBase && !compareHead && !treeBase && !treeHead) {
     console.warn(`[VDP] refs not found for ${org}/${repo}#${prNumber}`)
   }
 
-  return { base: resolvedBase, head: resolvedHead }
+  return {
+    base: domBase ?? compareBase ?? treeBase ?? apiRefs?.base ?? null,
+    head: domHead ?? compareHead ?? treeHead ?? apiRefs?.head ?? null,
+    baseSha: apiRefs?.baseSha ?? null,
+    headSha: apiRefs?.headSha ?? null,
+  }
 }
 
 // ─── Raw file fetch ───────────────────────────────────────────────────────────

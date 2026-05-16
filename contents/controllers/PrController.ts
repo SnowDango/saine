@@ -48,8 +48,9 @@ async function processFileContainer(container: Element): Promise<void> {
       if (!prInfo) return
 
       const prRefs = await resolvePrRefs(prInfo.org, prInfo.repo, prInfo.prNumber)
-      const baseRef = prRefs.base
-      let headRef = prRefs.head
+      // commit SHA を優先して使用する (ブランチ削除後もアクセス可能)
+      const baseRef = prRefs.baseSha ?? prRefs.base
+      let headRef = prRefs.headSha ?? prRefs.head
       if (!headRef) {
         const containerRef = findHeadRefFromContainer(container, filePath)
         headRef = (containerRef && containerRef !== baseRef) ? containerRef : null

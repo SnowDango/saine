@@ -1,16 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest"
-import {
-  isPrPage,
-  isBlobPage,
-  isDrawableXml,
-  parsePrUrlInfo,
-  parseBlobUrlInfo,
-  getFilePath,
-  getDiffContent,
-  findHeadShaFromContainer,
-  extractPrOidsFromPage,
-  extractModuleResPrefix,
-} from "~contents/models/GitHubService"
+import { isPrPage, isBlobPage, parsePrUrlInfo, parseBlobUrlInfo } from "~contents/models/UrlUtils"
+import { isDrawableXml, extractModuleResPrefix } from "~contents/models/DrawableService"
+import { getFilePath, getDiffContent, findHeadShaFromContainer, extractPrOidsFromPage } from "~contents/models/PageDomReader"
 
 // ─── isPrPage ─────────────────────────────────────────────────────────────────
 
@@ -211,7 +202,6 @@ describe("extractModuleResPrefix", () => {
   })
 
   it("res-layouts/find/drawable/ のようにサブディレクトリを含む構造でも drawable 親を返す", () => {
-    // drawable* の親が res root (find/) になるケース
     expect(extractModuleResPrefix("legacy/src/main/res-layouts/find/drawable/sel.xml"))
       .toBe("legacy/src/main/res-layouts/find/")
   })
@@ -275,7 +265,6 @@ describe("findHeadShaFromContainer", () => {
     const a = document.createElement("a")
     a.href = `https://github.com/org/repo/blob/${MOCK_SHA}/other/file.xml`
     container.appendChild(a)
-    // filePath が一致しないが URL 先頭の SHA は取得できる
     expect(findHeadShaFromContainer(container, "drawable/icon.xml")).toBe(MOCK_SHA)
   })
 })
@@ -306,7 +295,10 @@ describe("extractPrOidsFromPage", () => {
         comparison: { fullDiff: { baseOid: "base111", headOid: "head222" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base111", headOid: "head222", mergeCommitOid: null })
+    const result = extractPrOidsFromPage()
+    expect(result.baseOid).toBe("base111")
+    expect(result.headOid).toBe("head222")
+    expect(result.mergeCommitOid).toBeNull()
   })
 
   it("pullRequestsFilesRoute から OID を抽出する", () => {
@@ -315,7 +307,10 @@ describe("extractPrOidsFromPage", () => {
         comparison: { fullDiff: { baseOid: "base333", headOid: "head444" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base333", headOid: "head444", mergeCommitOid: null })
+    const result = extractPrOidsFromPage()
+    expect(result.baseOid).toBe("base333")
+    expect(result.headOid).toBe("head444")
+    expect(result.mergeCommitOid).toBeNull()
   })
 
   it("pullRequestsLayoutRoute から OID を抽出する", () => {
@@ -324,7 +319,10 @@ describe("extractPrOidsFromPage", () => {
         pullRequest: { comparison: { baseOid: "base555", headOid: "head666" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base555", headOid: "head666", mergeCommitOid: null })
+    const result = extractPrOidsFromPage()
+    expect(result.baseOid).toBe("base555")
+    expect(result.headOid).toBe("head666")
+    expect(result.mergeCommitOid).toBeNull()
   })
 
   it("diffContents の oldCommitOid/newCommitOid から OID を抽出する", () => {
@@ -333,12 +331,17 @@ describe("extractPrOidsFromPage", () => {
         diffContents: [{ oldCommitOid: "base777", newCommitOid: "head888" }],
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base777", headOid: "head888", mergeCommitOid: null })
+    const result = extractPrOidsFromPage()
+    expect(result.baseOid).toBe("base777")
+    expect(result.headOid).toBe("head888")
+    expect(result.mergeCommitOid).toBeNull()
   })
 
   it("該当データがなければ null/null を返す", () => {
     addScript({ somethingElse: {} })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: null, headOid: null, mergeCommitOid: null })
+    const result = extractPrOidsFromPage()
+    expect(result.baseOid).toBeNull()
+    expect(result.headOid).toBeNull()
+    expect(result.mergeCommitOid).toBeNull()
   })
 })
-

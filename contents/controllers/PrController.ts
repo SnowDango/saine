@@ -1,20 +1,18 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
 import { parseVersionsFromDiff } from "../models/DiffParser"
+import { fetchRawGithub } from "../models/GitHubApi"
+import { getDiffContent, getFilePath } from "../models/PageDomReader"
+import { findHeadShaFromContainer } from "../models/PageDomReader"
 import {
-  clearPrRefsCache,
   extractModuleResPrefix,
-  fetchRawGithub,
   findDrawableInModule,
-  findHeadShaFromContainer,
-  getDiffContent,
-  getFilePath,
   isAndroidSelector,
   isDrawableXml,
-  parsePrUrlInfo,
   parseSelectorItems,
-  resolvePrRefs,
-} from "../models/GitHubService"
+} from "../models/DrawableService"
+import { clearPrRefsCache, resolvePrRefs } from "../models/PrRefsService"
+import { parsePrUrlInfo } from "../models/UrlUtils"
 import type { ChangeType, PreviewData, SelectorStateItem } from "../models/types"
 import { removePanel, renderPanel, renderSelectorPanel } from "../views/PreviewPanelView"
 
@@ -50,8 +48,6 @@ async function processFileContainer(container: Element): Promise<void> {
       const containerHeadSha = findHeadShaFromContainer(container, filePath)
       resolvedHeadRef = containerHeadSha ?? prRefs.headSha ?? prRefs.head ?? null
 
-      // 片方の ref だけでも取得可能な場合はフェッチを試みる
-      // (削除ファイルは HEAD に View file リンクがなく resolvedHeadRef が null になりやすい)
       if ((resolvedBaseRef || resolvedHeadRef) && resolvedBaseRef !== resolvedHeadRef) {
         const [fetchedBefore, fetchedAfter] = await Promise.all([
           resolvedBaseRef

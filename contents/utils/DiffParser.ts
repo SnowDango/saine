@@ -1,4 +1,4 @@
-import type { ParsedVersions } from "./types"
+import type { ParsedVersions } from "../models/types"
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 //
@@ -17,6 +17,10 @@ import type { ParsedVersions } from "./types"
 
 // ─── /changes view diff parser ────────────────────────────────────────────────
 
+/**
+ * /changes ビューの diff セルから表示テキストを取得する。
+ * 新 DOM では `code > .diff-text-inner`、旧 DOM では `code` 直下のテキストを返す。
+ */
 function getChangesViewCellCode(cell: HTMLElement): string | null {
   const codeEl = cell.querySelector<HTMLElement>("code.diff-text")
   if (!codeEl) return null
@@ -25,6 +29,10 @@ function getChangesViewCellCode(cell: HTMLElement): string | null {
   return (inner ?? codeEl).textContent ?? ""
 }
 
+/**
+ * `/changes` ビュー（`data-diff-anchor` コンテナ）の diff テーブルを解析して
+ * before/after のテキストを復元する。新旧 DOM 構造の両方に対応する。
+ */
 function parseChangesViewDiff(table: Element): ParsedVersions {
   const rows = table.querySelectorAll<HTMLElement>("tr")
   if (rows.length === 0) return { before: null, after: null, isComplete: false }
@@ -104,6 +112,10 @@ function parseChangesViewDiff(table: Element): ParsedVersions {
 
 // ─── /files view diff parser ──────────────────────────────────────────────────
 
+/**
+ * `/files` ビュー（`.file` コンテナ）の diff テーブルを解析して
+ * before/after のテキストを復元する。split diff と unified diff の両方に対応する。
+ */
 function parseFilesViewDiff(fileContainer: Element): ParsedVersions {
   if (fileContainer.querySelector(".js-load-diff, [data-deferred-diff-type]")) {
     return { before: null, after: null, isComplete: false }
@@ -161,6 +173,10 @@ function parseFilesViewDiff(fileContainer: Element): ParsedVersions {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * ファイルコンテナから diff を解析して before/after のテキストを返す。
+ * `data-diff-anchor` 属性の有無でビュー種別を判定し、適切なパーサーに委譲する。
+ */
 export function parseVersionsFromDiff(container: Element): ParsedVersions {
   if (container.hasAttribute("data-diff-anchor")) {
     return parseChangesViewDiff(container)

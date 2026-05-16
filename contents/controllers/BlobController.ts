@@ -1,8 +1,8 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { fetchRawGithub } from "../models/GitHubApi"
-import { isDrawableXml } from "../models/DrawableService"
-import { parseBlobUrlInfo } from "../models/UrlUtils"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { isDrawableXml } from "../services/DrawableService"
+import { parseBlobUrlInfo } from "../utils/UrlUtils"
 import { renderBlobPanel } from "../views/PreviewPanelView"
 import { isContextInvalidated, isExtensionValid } from "./extensionContext"
 
@@ -31,6 +31,11 @@ const BLOB_ANCHOR_SELECTORS = [
 /**
  * 現在の blob ページを処理してプレビューを挿入する。
  * Extension context が無効化された場合は true を返す。
+ */
+/**
+ * 現在の blob ページを処理してプレビューパネルを挿入する。
+ * drawable XML でなければ何もしない。
+ * Extension context が無効化された場合は true、それ以外は false を返す。
  */
 export async function processBlobPage(): Promise<boolean> {
   if (!isExtensionValid()) return true

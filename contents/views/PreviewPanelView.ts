@@ -234,7 +234,7 @@ export function renderPanel(
 ): void {
   if (diffContent) diffContent.style.display = "none"
 
-  const { baseSvg, headSvg, changeType, isComplete } = data
+  const { baseSvg, headSvg, changeType } = data
 
   const panel = document.createElement("div")
   const panelKey = `vdp_panel_${panelRenderSeq++}`

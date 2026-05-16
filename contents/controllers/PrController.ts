@@ -1,18 +1,18 @@
 import { isAndroidVectorDrawable, vectorDrawableToSvg } from "~lib/vectorDrawable"
 
-import { parseVersionsFromDiff } from "../models/DiffParser"
-import { fetchRawGithub } from "../models/GitHubApi"
-import { getDiffContent, getFilePath } from "../models/PageDomReader"
-import { findHeadShaFromContainer } from "../models/PageDomReader"
+import { parseVersionsFromDiff } from "../utils/DiffParser"
+import { fetchRawGithub } from "../repositories/GitHubApi"
+import { getDiffContent, getFilePath } from "../repositories/PageDomReader"
+import { findHeadShaFromContainer } from "../repositories/PageDomReader"
 import {
   extractModuleResPrefix,
   findDrawableInModule,
   isAndroidSelector,
   isDrawableXml,
   parseSelectorItems,
-} from "../models/DrawableService"
-import { clearPrRefsCache, resolvePrRefs } from "../models/PrRefsService"
-import { parsePrUrlInfo } from "../models/UrlUtils"
+} from "../services/DrawableService"
+import { clearPrRefsCache, resolvePrRefs } from "../services/PrRefsService"
+import { parsePrUrlInfo } from "../utils/UrlUtils"
 import type { ChangeType, PreviewData, SelectorStateItem } from "../models/types"
 import { removePanel, renderPanel, renderSelectorPanel } from "../views/PreviewPanelView"
 
@@ -23,6 +23,11 @@ export const FILE_CONTAINER_SELECTOR = ".file, [data-tagsearch-path], [data-diff
 
 // ─── File container processing ────────────────────────────────────────────────
 
+/**
+ * 単一のファイルコンテナを処理してプレビューパネルを挿入する。
+ * drawable XML でなければ何もしない。二重処理防止のため PROCESSED_ATTR を付与する。
+ * Vector Drawable と Selector XML の両方に対応し、before/after の差分を可視化する。
+ */
 async function processFileContainer(container: Element): Promise<void> {
   if (container.hasAttribute(PROCESSED_ATTR)) return
 
@@ -133,12 +138,20 @@ async function processFileContainer(container: Element): Promise<void> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * ページ上のすべてのファイルコンテナを走査してプレビューを挿入する。
+ * ページロード時や CLEAR_CACHE メッセージ受信後の再スキャンに使う。
+ */
 export function scanPage(): void {
   document.querySelectorAll<Element>(FILE_CONTAINER_SELECTOR).forEach((c) => {
     processFileContainer(c).catch((err) => console.warn("[VDP] scan error:", err))
   })
 }
 
+/**
+ * MutationObserver のコールバック。新たに追加されたノードを検査し、
+ * ファイルコンテナが含まれていればプレビューを挿入する。
+ */
 export function handleMutations(mutations: MutationRecord[]): void {
   for (const mut of mutations) {
     for (const node of mut.addedNodes) {
@@ -153,6 +166,10 @@ export function handleMutations(mutations: MutationRecord[]): void {
   }
 }
 
+/**
+ * 挿入済みのすべてのプレビューパネルを削除し、処理済みフラグをリセットする。
+ * PAT 変更時や CLEAR_CACHE メッセージ受信後に呼ばれる。
+ */
 export function clearPanels(): void {
   clearPrRefsCache()
   document.querySelectorAll<Element>(`[${PROCESSED_ATTR}]`).forEach((el) => {

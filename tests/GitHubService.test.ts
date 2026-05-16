@@ -9,6 +9,7 @@ import {
   getDiffContent,
   findHeadShaFromContainer,
   extractPrOidsFromPage,
+  extractModuleResPrefix,
 } from "~contents/models/GitHubService"
 
 // ─── isPrPage ─────────────────────────────────────────────────────────────────
@@ -191,6 +192,50 @@ describe("getDiffContent", () => {
   })
 })
 
+// ─── extractModuleResPrefix ───────────────────────────────────────────────────
+
+describe("extractModuleResPrefix", () => {
+  it("標準的な /src/main/res/drawable/ から正しいプレフィックスを返す", () => {
+    expect(extractModuleResPrefix("app/src/main/res/drawable/icon.xml"))
+      .toBe("app/src/main/res/")
+  })
+
+  it("drawable-night など修飾子付き drawable ディレクトリも正しく処理する", () => {
+    expect(extractModuleResPrefix("org/project/app/src/main/res/drawable-night/bg.xml"))
+      .toBe("org/project/app/src/main/res/")
+  })
+
+  it("drawable-xxxhdpi など密度修飾子付きディレクトリも正しく処理する", () => {
+    expect(extractModuleResPrefix("module/src/main/res-debug/drawable-xxxhdpi/icon.xml"))
+      .toBe("module/src/main/res-debug/")
+  })
+
+  it("res-layouts/find/drawable/ のようにサブディレクトリを含む構造でも drawable 親を返す", () => {
+    // drawable* の親が res root (find/) になるケース
+    expect(extractModuleResPrefix("legacy/src/main/res-layouts/find/drawable/sel.xml"))
+      .toBe("legacy/src/main/res-layouts/find/")
+  })
+
+  it("res-layouts/find/drawable-xxxhdpi/ のような画像パスでも正しく処理する", () => {
+    expect(extractModuleResPrefix("legacy/src/main/res-layouts/find/drawable-xxxhdpi/icon.png"))
+      .toBe("legacy/src/main/res-layouts/find/")
+  })
+
+  it("drawable が見つからず /src/main/res*/ がある場合はそこまでを返す", () => {
+    expect(extractModuleResPrefix("some/src/main/res-debug/values/strings.xml"))
+      .toBe("some/src/main/res-debug/")
+  })
+
+  it("/src/main/res が見つからない場合はファイルのディレクトリを返す", () => {
+    expect(extractModuleResPrefix("some/arbitrary/path/icon.xml"))
+      .toBe("some/arbitrary/path/")
+  })
+
+  it("スラッシュなしの単純ファイル名は空文字を返す", () => {
+    expect(extractModuleResPrefix("icon.xml")).toBe("")
+  })
+})
+
 // ─── findHeadShaFromContainer ─────────────────────────────────────────────────
 
 const MOCK_SHA = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
@@ -261,7 +306,7 @@ describe("extractPrOidsFromPage", () => {
         comparison: { fullDiff: { baseOid: "base111", headOid: "head222" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base111", headOid: "head222" })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base111", headOid: "head222", mergeCommitOid: null })
   })
 
   it("pullRequestsFilesRoute から OID を抽出する", () => {
@@ -270,7 +315,7 @@ describe("extractPrOidsFromPage", () => {
         comparison: { fullDiff: { baseOid: "base333", headOid: "head444" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base333", headOid: "head444" })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base333", headOid: "head444", mergeCommitOid: null })
   })
 
   it("pullRequestsLayoutRoute から OID を抽出する", () => {
@@ -279,7 +324,7 @@ describe("extractPrOidsFromPage", () => {
         pullRequest: { comparison: { baseOid: "base555", headOid: "head666" } },
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base555", headOid: "head666" })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base555", headOid: "head666", mergeCommitOid: null })
   })
 
   it("diffContents の oldCommitOid/newCommitOid から OID を抽出する", () => {
@@ -288,12 +333,12 @@ describe("extractPrOidsFromPage", () => {
         diffContents: [{ oldCommitOid: "base777", newCommitOid: "head888" }],
       },
     })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base777", headOid: "head888" })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base777", headOid: "head888", mergeCommitOid: null })
   })
 
   it("該当データがなければ null/null を返す", () => {
     addScript({ somethingElse: {} })
-    expect(extractPrOidsFromPage()).toEqual({ baseOid: null, headOid: null })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: null, headOid: null, mergeCommitOid: null })
   })
 })
 

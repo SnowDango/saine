@@ -1,4 +1,4 @@
-import type { PreviewData } from "../models/types"
+import type { PreviewData, SelectorPreviewData, SelectorStateItem } from "../models/types"
 
 import { t } from "~lib/i18n"
 
@@ -503,5 +503,216 @@ export function renderBlobPanel(anchor: Element, svgHtml: string, position: Inse
       for (const entry of entries) buildBody(entry.contentRect.width)
     })
     ro.observe(panel)
+  }
+}
+
+// ─── Selector preview panel ───────────────────────────────────────────────────
+
+const SELECTOR_BOX_PX = 96
+
+function makeImageBox(url: string, bg: string, border: string): HTMLElement {
+  const box = document.createElement("div")
+  box.style.cssText = [
+    `width:${SELECTOR_BOX_PX}px;height:${SELECTOR_BOX_PX}px;`,
+    "display:flex;align-items:center;justify-content:center;",
+    `background:${bg};border:1px solid ${border};`,
+    "border-radius:6px;overflow:hidden;flex-shrink:0;",
+  ].join("")
+  const img = document.createElement("img")
+  img.src = url
+  img.alt = ""
+  img.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;display:block;"
+  box.appendChild(img)
+  return box
+}
+
+function makeSelectorStateSection(
+  item: SelectorStateItem,
+  renderKeyPrefix: string
+): HTMLElement {
+  const section = document.createElement("div")
+  section.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px;"
+
+  // State label
+  const label = document.createElement("div")
+  label.textContent = item.stateLabel
+  label.style.cssText = [
+    "font-size:10px;font-weight:600;max-width:180px;",
+    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;",
+    "padding:1px 8px;border-radius:10px;",
+    "background:var(--bgColor-neutral-muted,var(--color-neutral-subtle,#f3f4f6));",
+    "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+  ].join("")
+  section.appendChild(label)
+
+  // light / dark boxes
+  const boxes = document.createElement("div")
+  boxes.style.cssText = "display:flex;gap:8px;justify-content:center;"
+  if (item.svg) {
+    boxes.appendChild(makeSvgBox(item.svg, "#ffffff", "#d0d7de", `${renderKeyPrefix}_l`, SELECTOR_BOX_PX))
+    boxes.appendChild(makeSvgBox(item.svg, "#0d1117", "#30363d", `${renderKeyPrefix}_d`, SELECTOR_BOX_PX))
+  } else if (item.imageUrl) {
+    boxes.appendChild(makeImageBox(item.imageUrl, "#ffffff", "#d0d7de"))
+    boxes.appendChild(makeImageBox(item.imageUrl, "#0d1117", "#30363d"))
+  } else {
+    boxes.appendChild(makeEmptyBox(t("noPreview")))
+    boxes.appendChild(makeEmptyBox(t("noPreview")))
+  }
+  section.appendChild(boxes)
+
+  // Dimensions (SVG のみ)
+  if (item.svg) {
+    const dims = parseSvgAspectRatio(item.svg)
+    if (dims) {
+      const dimsEl = document.createElement("div")
+      dimsEl.textContent = `W: ${Math.round(dims.w)}dp | H: ${Math.round(dims.h)}dp`
+      dimsEl.style.cssText = [
+        "font-size:11px;",
+        "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+      ].join("")
+      section.appendChild(dimsEl)
+    }
+  }
+
+  return section
+}
+
+function makeSelectorColumn(
+  title: string,
+  badge: HTMLElement,
+  states: SelectorStateItem[] | null,
+  emptyLabel: string,
+  renderKeyPrefix: string
+): HTMLElement {
+  const col = document.createElement("div")
+  col.style.cssText = "flex:1;display:flex;flex-direction:column;gap:16px;align-items:center;"
+
+  // Column title row
+  const titleRow = document.createElement("div")
+  titleRow.style.cssText = "display:flex;align-items:center;gap:6px;"
+  const titleEl = document.createElement("span")
+  titleEl.textContent = title
+  titleEl.style.cssText = [
+    "font-size:12px;font-weight:600;",
+    "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
+  ].join("")
+  titleRow.appendChild(titleEl)
+  titleRow.appendChild(badge)
+  col.appendChild(titleRow)
+
+  if (!states || states.length === 0) {
+    col.appendChild(makeEmptyBox(emptyLabel))
+  } else {
+    for (const [i, item] of states.entries()) {
+      col.appendChild(makeSelectorStateSection(item, `${renderKeyPrefix}_${i}`))
+    }
+  }
+
+  return col
+}
+
+export function renderSelectorPanel(
+  container: Element,
+  diffContent: HTMLElement | null,
+  data: SelectorPreviewData
+): void {
+  if (diffContent) diffContent.style.display = "none"
+
+  const { changeType, baseStates, headStates } = data
+  const panelKey = `vdp_sel_${panelRenderSeq++}`
+
+  const panel = document.createElement("div")
+  panel.setAttribute("data-vdp-panel", "1")
+  panel.style.cssText = [
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;",
+    "border-bottom:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
+
+  // ── Header ──
+  const headerBar = document.createElement("div")
+  headerBar.style.cssText = [
+    "display:flex;align-items:center;justify-content:space-between;",
+    "padding:8px 16px;",
+    "background:var(--bgColor-muted,var(--color-canvas-subtle,#f6f8fa));",
+    "border-bottom:1px solid var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
+  const left = document.createElement("div")
+  left.style.cssText = "display:flex;align-items:center;gap:8px;"
+  const panelTitle = document.createElement("span")
+  panelTitle.textContent = t("panelTitle")
+  panelTitle.style.cssText = [
+    "font-size:12px;font-weight:600;line-height:20px;",
+    "color:var(--fgColor-default,var(--color-fg-default,#1f2328));",
+  ].join("")
+  left.appendChild(panelTitle)
+  left.appendChild(makeBadge("selector", "#6e40c9"))
+  headerBar.appendChild(left)
+
+  let codeVisible = false
+  const toggleBtn = document.createElement("button")
+  toggleBtn.textContent = t("showCodeDiff")
+  toggleBtn.style.cssText = [
+    "font-size:12px;background:none;border:none;",
+    "cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit;",
+    "color:var(--fgColor-accent,var(--color-accent-fg,#0969da));",
+  ].join("")
+  toggleBtn.addEventListener("mouseenter", () => {
+    toggleBtn.style.background = "var(--bgColor-neutral-muted,var(--color-neutral-subtle,#f3f4f6))"
+  })
+  toggleBtn.addEventListener("mouseleave", () => { toggleBtn.style.background = "none" })
+  toggleBtn.addEventListener("click", () => {
+    codeVisible = !codeVisible
+    if (diffContent) diffContent.style.display = codeVisible ? "" : "none"
+    toggleBtn.textContent = codeVisible ? t("hideCodeDiff") : t("showCodeDiff")
+  })
+  headerBar.appendChild(toggleBtn)
+  panel.appendChild(headerBar)
+
+  // ── Body ──
+  const body = document.createElement("div")
+  body.style.cssText = [
+    "display:flex;padding:16px 24px;",
+    "background:var(--bgColor-default,var(--color-canvas-default,#ffffff));",
+  ].join("")
+
+  const afterBadgeText =
+    changeType === "added" ? "ADDED" : changeType === "deleted" ? "DELETED" : "HEAD"
+  const afterBadgeColor =
+    changeType === "added" ? "#1a7f37" : changeType === "deleted" ? "#cf222e" : "#0969da"
+
+  body.appendChild(
+    makeSelectorColumn(
+      "Before",
+      changeType === "added" ? makeBadge("n/a", "#8c959f") : makeBadge("BASE", "#6e40c9"),
+      baseStates,
+      changeType === "added" ? t("newFile") : t("noPreview"),
+      `${panelKey}_base`
+    )
+  )
+
+  const divider = document.createElement("div")
+  divider.style.cssText = [
+    "width:1px;margin:0 24px;flex-shrink:0;align-self:stretch;",
+    "background:var(--borderColor-default,var(--color-border-default,#d0d7de));",
+  ].join("")
+  body.appendChild(divider)
+
+  body.appendChild(
+    makeSelectorColumn(
+      "After",
+      makeBadge(afterBadgeText, afterBadgeColor),
+      headStates,
+      changeType === "deleted" ? t("deleted") : t("noPreview"),
+      `${panelKey}_head`
+    )
+  )
+
+  panel.appendChild(body)
+
+  const anchor = diffContent ?? container.querySelector(".file-header")
+  if (anchor?.parentElement) {
+    anchor.parentElement.insertBefore(panel, anchor)
+  } else {
+    container.appendChild(panel)
   }
 }

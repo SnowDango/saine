@@ -1,7 +1,8 @@
-import { isBlobPage, isPrPage } from "../models/GitHubService"
-import { processBlobPage } from "./BlobController"
-import { isContextInvalidated, isExtensionValid } from "./extensionContext"
-import { FILE_CONTAINER_SELECTOR, clearPanels, handleMutations, scanPage } from "./PrController"
+import { clearContentsListCache, clearPrRefsCache, isBlobPage, isPrPage } from "../models/GitHubService";
+import { processBlobPage } from "./BlobController";
+import { isContextInvalidated, isExtensionValid } from "./extensionContext";
+import { clearPanels, FILE_CONTAINER_SELECTOR, handleMutations, scanPage } from "./PrController";
+
 
 // ─── Lifecycle management ─────────────────────────────────────────────────────
 
@@ -62,8 +63,19 @@ export function boot(): void {
     if (message.type === "CLEAR_CACHE") {
       clearPanels()
       if (message.rescan !== false && isPrPage(location.href)) scanPage()
-      sendResponse({ ok: true })
+      try { sendResponse({ ok: true }) } catch { /* bfcache でポートが閉じている場合は無視 */ }
     }
     return true
+  })
+
+  // PAT が変更されたらパネルをリセットして最新の認証で再解決する
+  // clearPanels() が内部で clearPrRefsCache() を呼び PROCESSED_ATTR も除去する
+  chrome.storage.onChanged.addListener((changes) => {
+    if ("github_pat" in changes) {
+      clearPrRefsCache()
+      clearContentsListCache()
+      clearPanels()
+      if (isPrPage(location.href)) scanPage()
+    }
   })
 }

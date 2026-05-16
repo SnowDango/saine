@@ -64,7 +64,7 @@ chrome.runtime.onInstalled.addListener(() => {
   checkForUpdate()
 })
 
-// popup からのメッセージに応答
+// popup / content script からのメッセージに応答
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "CHECK_UPDATE") {
     checkForUpdate().then(sendResponse)
@@ -74,6 +74,35 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     chrome.storage.local.get(["updateInfo"]).then((result) => {
       sendResponse(result.updateInfo ?? null)
     })
+    return true
+  }
+  if (message.type === "OPEN_OPTIONS") {
+    chrome.runtime.openOptionsPage()
+    sendResponse({})
+  }
+  // content script のネットワークリクエストを background で実行する。
+  // background の fetch はページの DevTools コンソールに表示されないため、
+  // 404 等のエラーがユーザーのコンソールを汚染しない。
+  if (message.type === "FETCH_REQUEST") {
+    const { url, method = "GET", headers = {} } = message as {
+      url: string
+      method?: string
+      headers?: Record<string, string>
+    }
+    fetch(url, { method, headers })
+      .then(async (resp) => {
+        if (method === "HEAD") {
+          sendResponse({ ok: resp.ok, status: resp.status })
+          return
+        }
+        const text = resp.ok ? await resp.text() : ""
+        let data: unknown = null
+        if (resp.ok && text) {
+          try { data = JSON.parse(text) } catch { /* text/xml 等 */ }
+        }
+        sendResponse({ ok: resp.ok, status: resp.status, text, data })
+      })
+      .catch(() => sendResponse({ ok: false, status: 0, text: "", data: null }))
     return true
   }
 })

@@ -4,7 +4,7 @@ import { parseVersionsFromDiff } from "../models/DiffParser"
 import {
   clearPrRefsCache,
   fetchRawGithub,
-  findHeadRefFromContainer,
+  findHeadShaFromContainer,
   getDiffContent,
   getFilePath,
   isDrawableXml,
@@ -30,60 +30,41 @@ async function processFileContainer(container: Element): Promise<void> {
 
     container.setAttribute(PROCESSED_ATTR, "1")
 
-    const { before: diffBefore, after: diffAfter, isComplete } = parseVersionsFromDiff(container)
+    let before: string | null = null
+    let after: string | null = null
 
-    const isDiffBeforeVd = diffBefore ? isAndroidVectorDrawable(diffBefore) : false
-    const isDiffAfterVd = diffAfter ? isAndroidVectorDrawable(diffAfter) : false
-
-    let before: string | null
-    let after: string | null
-    let panelIsComplete: boolean
-
-    if (isComplete && isDiffBeforeVd && isDiffAfterVd) {
-      before = diffBefore
-      after = diffAfter
-      panelIsComplete = true
-    } else {
-      const prInfo = parsePrUrlInfo(location.href)
-      if (!prInfo) return
-
+    // 1. Primary: commit SHA でフルファイルを取得 (ブランチ削除後・private repo でも動作)
+    const prInfo = parsePrUrlInfo(location.href)
+    if (prInfo) {
       const prRefs = await resolvePrRefs(prInfo.org, prInfo.repo, prInfo.prNumber)
-      const baseRef = prRefs.base
-      let headRef = prRefs.head
-      if (!headRef) {
-        const containerRef = findHeadRefFromContainer(container, filePath)
-        headRef = (containerRef && containerRef !== baseRef) ? containerRef : null
-      }
+      const baseRef = prRefs.baseSha ?? prRefs.base
+      const headRef = prRefs.headSha ?? findHeadShaFromContainer(container, filePath)
 
-      if (baseRef && headRef && baseRef === headRef) {
-        clearPrRefsCache(`${prInfo.org}/${prInfo.repo}/${prInfo.prNumber}`)
-        console.warn(`[VDP] base === head (${baseRef}), aborting`)
-        return
-      }
+      if (baseRef && headRef && baseRef !== headRef) {
+        const [fetchedBefore, fetchedAfter] = await Promise.all([
+          fetchRawGithub(prInfo.org, prInfo.repo, baseRef, filePath),
+          fetchRawGithub(prInfo.org, prInfo.repo, headRef, filePath),
+        ])
+        before = fetchedBefore && isAndroidVectorDrawable(fetchedBefore) ? fetchedBefore : null
+        after = fetchedAfter && isAndroidVectorDrawable(fetchedAfter) ? fetchedAfter : null
 
-      const [fetchedBefore, fetchedAfter] = await Promise.all([
-        baseRef
-          ? fetchRawGithub(prInfo.org, prInfo.repo, baseRef, filePath)
-          : Promise.resolve(null),
-        headRef
-          ? fetchRawGithub(prInfo.org, prInfo.repo, headRef, filePath)
-          : Promise.resolve(null),
-      ])
-
-      before = fetchedBefore && isAndroidVectorDrawable(fetchedBefore) ? fetchedBefore : null
-      after = fetchedAfter && isAndroidVectorDrawable(fetchedAfter) ? fetchedAfter : null
-
-      // フェッチした base/head が完全一致 → ref 解決ミスの可能性
-      if (before !== null && after !== null && before === after) {
-        console.warn("[VDP] fetched base === head content, falling back to diff-parsed")
-        if (isDiffBeforeVd && isDiffAfterVd && diffBefore !== diffAfter) {
-          before = diffBefore
-          after = diffAfter
-          panelIsComplete = isComplete
+        if (before !== null && after !== null && before === after) {
+          console.warn("[VDP] fetched base === head content, clearing")
+          before = null
+          after = null
         }
       }
+    }
 
-      panelIsComplete = true
+    // 2. Fallback: diff から部分的に復元
+    if (before === null && after === null) {
+      const { before: diffBefore, after: diffAfter } = parseVersionsFromDiff(container)
+      const isDiffBeforeVd = diffBefore ? isAndroidVectorDrawable(diffBefore) : false
+      const isDiffAfterVd = diffAfter ? isAndroidVectorDrawable(diffAfter) : false
+      if (isDiffBeforeVd || isDiffAfterVd) {
+        before = isDiffBeforeVd ? diffBefore : null
+        after = isDiffAfterVd ? diffAfter : null
+      }
     }
 
     if (!document.contains(container)) return
@@ -94,7 +75,7 @@ async function processFileContainer(container: Element): Promise<void> {
     const changeType: ChangeType =
       before === null ? "added" : after === null ? "deleted" : "modified"
 
-    const data: PreviewData = { baseSvg, headSvg, changeType, isComplete: panelIsComplete }
+    const data: PreviewData = { baseSvg, headSvg, changeType, isComplete: true }
     const diffContent = getDiffContent(container)
     renderPanel(container, diffContent, data)
   } catch (err) {

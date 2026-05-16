@@ -41,31 +41,34 @@ function parseChangesViewDiff(table: Element): ParsedVersions {
     if (row.querySelector("th")) continue
     if (row.querySelector("code.diff-text-cell.hunk, td[colspan='4']")) continue
 
-    // ── 新 /changes view: 1行につき td.diff-text-cell が1つだけ存在 ──
-    const textCell = row.querySelector<HTMLElement>("td.diff-text-cell")
-    if (textCell) {
-      const text = getChangesViewCellCode(textCell)
-      if (text !== null) {
-        // 行番号セルの有無で行タイプを判定
-        //   left に番号あり  → before に含まれる行 (削除行 or 変更なし)
-        //   right に番号あり → after  に含まれる行 (追加行 or 変更なし)
-        const leftNumCell = row.querySelector<HTMLElement>(
-          "td[data-diff-side=left]:not(.diff-text-cell)"
-        )
-        const rightNumCell = row.querySelector<HTMLElement>(
-          "td[data-diff-side=right]:not(.diff-text-cell)"
-        )
-        const hasLeft =
-          leftNumCell !== null &&
-          !leftNumCell.hasAttribute("aria-hidden") &&
-          (leftNumCell.textContent?.trim() ?? "") !== ""
-        const hasRight =
-          rightNumCell !== null &&
-          !rightNumCell.hasAttribute("aria-hidden") &&
-          (rightNumCell.textContent?.trim() ?? "") !== ""
+    // DOM の種別判定: 行番号専用セル（.diff-text-cell を持たない data-diff-side td）が
+    // あれば新 /changes view、なければ旧 /changes view として扱う
+    const leftNumCell = row.querySelector<HTMLElement>(
+      "td[data-diff-side=left]:not(.diff-text-cell)"
+    )
+    const rightNumCell = row.querySelector<HTMLElement>(
+      "td[data-diff-side=right]:not(.diff-text-cell)"
+    )
 
-        if (hasLeft) beforeLines.push(text)
-        if (hasRight) afterLines.push(text)
+    if (leftNumCell !== null || rightNumCell !== null) {
+      // ── 新 /changes view: 1行につき td.diff-text-cell が1つだけ存在 ──
+      //   left に番号あり  → before に含まれる行 (削除行 or 変更なし)
+      //   right に番号あり → after  に含まれる行 (追加行 or 変更なし)
+      const textCell = row.querySelector<HTMLElement>("td.diff-text-cell")
+      if (textCell) {
+        const text = getChangesViewCellCode(textCell)
+        if (text !== null) {
+          const hasLeft =
+            leftNumCell !== null &&
+            !leftNumCell.hasAttribute("aria-hidden") &&
+            (leftNumCell.textContent?.trim() ?? "") !== ""
+          const hasRight =
+            rightNumCell !== null &&
+            !rightNumCell.hasAttribute("aria-hidden") &&
+            (rightNumCell.textContent?.trim() ?? "") !== ""
+          if (hasLeft) beforeLines.push(text)
+          if (hasRight) afterLines.push(text)
+        }
       }
       continue
     }

@@ -1,7 +1,9 @@
-import { isBlobPage, isPrPage } from "../models/GitHubService"
+import { isBlobPage, isPrPage } from "../models/UrlUtils"
+import { clearContentsListCache } from "../models/DrawableService"
+import { clearPrRefsCache } from "../models/PrRefsService"
 import { processBlobPage } from "./BlobController"
 import { isContextInvalidated, isExtensionValid } from "./extensionContext"
-import { FILE_CONTAINER_SELECTOR, clearPanels, handleMutations, scanPage } from "./PrController"
+import { clearPanels, handleMutations, scanPage } from "./PrController"
 
 // ─── Lifecycle management ─────────────────────────────────────────────────────
 
@@ -62,8 +64,18 @@ export function boot(): void {
     if (message.type === "CLEAR_CACHE") {
       clearPanels()
       if (message.rescan !== false && isPrPage(location.href)) scanPage()
-      sendResponse({ ok: true })
+      try { sendResponse({ ok: true }) } catch { /* bfcache でポートが閉じている場合は無視 */ }
     }
     return true
+  })
+
+  // PAT が変更されたらパネルをリセットして最新の認証で再解決する
+  chrome.storage.onChanged.addListener((changes) => {
+    if ("github_pat" in changes) {
+      clearPrRefsCache()
+      clearContentsListCache()
+      clearPanels()
+      if (isPrPage(location.href)) scanPage()
+    }
   })
 }

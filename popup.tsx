@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { t } from "~lib/i18n"
 
 type Status = "idle" | "success" | "error" | "not-github"
+type PatStatus = "loading" | "connected" | "disconnected"
 
 interface UpdateInfo {
   hasUpdate: boolean
@@ -15,11 +16,23 @@ function IndexPopup() {
   const [status, setStatus] = useState<Status>("idle")
   const [withReload, setWithReload] = useState(true)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [patStatus, setPatStatus] = useState<PatStatus>("loading")
 
   useEffect(() => {
     chrome.runtime.sendMessage({ type: "GET_UPDATE_INFO" }, (info) => {
       if (info) setUpdateInfo(info)
     })
+
+    chrome.storage.local.get("github_pat", (result) => {
+      setPatStatus(result.github_pat ? "connected" : "disconnected")
+    })
+    const onStorageChange = (changes: Record<string, chrome.storage.StorageChange>) => {
+      if ("github_pat" in changes) {
+        setPatStatus(changes.github_pat.newValue ? "connected" : "disconnected")
+      }
+    }
+    chrome.storage.onChanged.addListener(onStorageChange)
+    return () => chrome.storage.onChanged.removeListener(onStorageChange)
   }, [])
 
   const handleCheckUpdate = () => {
@@ -117,6 +130,43 @@ function IndexPopup() {
           <span>🆕</span>
           <span>{t("updateAvailable", updateInfo.latestVersion ?? "")}</span>
         </a>
+      )}
+
+      {/* GitHub Token ステータス */}
+      {patStatus !== "loading" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 12,
+            padding: "6px 10px",
+            background: patStatus === "connected" ? "#dafbe1" : "#fff8c5",
+            border: `1px solid ${patStatus === "connected" ? "#82cfaa" : "#d4a017"}`,
+            borderRadius: 6,
+            fontSize: 12,
+          }}>
+          <span style={{ fontSize: 10, color: patStatus === "connected" ? "#1a7f37" : "#9a6700" }}>
+            {patStatus === "connected" ? "●" : "●"}
+          </span>
+          <span style={{ color: patStatus === "connected" ? "#1a7f37" : "#9a6700", fontWeight: 600 }}>
+            {patStatus === "connected" ? "GitHub Token: 接続済み" : "GitHub Token: 未接続"}
+          </span>
+          <button
+            onClick={() => chrome.runtime.openOptionsPage()}
+            style={{
+              marginLeft: "auto",
+              fontSize: 11,
+              color: "#0969da",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "1px 4px",
+              fontFamily: "inherit",
+            }}>
+            {patStatus === "connected" ? "管理" : "設定 →"}
+          </button>
+        </div>
       )}
 
       <hr style={{ border: "none", borderTop: "1px solid #d0d7de", margin: "0 0 16px" }} />

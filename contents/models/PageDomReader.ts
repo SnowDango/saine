@@ -85,35 +85,6 @@ export function findHeadShaFromContainer(container: Element, filePath: string | 
   return null
 }
 
-export function findHeadRefFromContainer(container: Element, filePath: string | null): string | null {
-  let el: Element | null = container.parentElement
-  for (let depth = 0; depth < 15; depth++) {
-    if (!el || el === document.body) break
-    for (const a of el.querySelectorAll<HTMLAnchorElement>("a[href*='/blob/']")) {
-      if (container.contains(a)) continue
-      const href = a.getAttribute("href") ?? ""
-      const blobIdx = href.indexOf("/blob/")
-      if (blobIdx < 0) continue
-      const afterBlob = href.slice(blobIdx + 6) // "/blob/".length === 6
-
-      if (filePath) {
-        const suffix = "/" + filePath
-        if (afterBlob.endsWith(suffix)) {
-          return afterBlob.slice(0, -suffix.length)
-        }
-        const encodedSuffix = "/" + filePath.split("/").map(encodeURIComponent).join("/")
-        if (afterBlob.endsWith(encodedSuffix)) {
-          return afterBlob.slice(0, -encodedSuffix.length)
-        }
-      }
-      const m = afterBlob.match(/^([^/?#]+)\//)
-      if (m?.[1]) return m[1]
-    }
-    el = el.parentElement
-  }
-  return null
-}
-
 /**
  * PR のタイムライン DOM から マージコミット SHA を探す。
  * "merged commit {sha} into {branch}" という表示を含む要素を探す。

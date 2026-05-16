@@ -40,6 +40,10 @@ async function fetchBranchHeadSha(
   }
 }
 
+/**
+ * GitHub Pulls API から PR の base/head ブランチ名と commit SHA を取得する。
+ * PAT がなければ private リポジトリでは失敗する。
+ */
 async function fetchPrRefsFromApi(
   org: string,
   repo: string,
@@ -70,6 +74,12 @@ async function fetchPrRefsFromApi(
   return null
 }
 
+/**
+ * PR の base/head SHA を解決する内部実装。
+ * DOM セレクター → compare リンク → tree リンク → ページ埋め込み JSON → Pulls API の順に
+ * ブランチ名を取得し、Git Refs API で実際の HEAD SHA を確定する。
+ * マージ済み PR ではマージコミット SHA を headSha として使用する。
+ */
 async function doResolvePrRefs(
   org: string,
   repo: string,
@@ -177,6 +187,9 @@ async function doResolvePrRefs(
 
 const prRefsCache = new Map<string, Promise<PrRefs>>()
 
+/**
+ * PR の base/head commit SHA を解決して返す。同一 PR への重複リクエストはキャッシュで抑制する。
+ */
 export function resolvePrRefs(org: string, repo: string, prNumber: string): Promise<PrRefs> {
   const cacheKey = `${org}/${repo}/${prNumber}`
   if (!prRefsCache.has(cacheKey)) {
@@ -185,6 +198,10 @@ export function resolvePrRefs(org: string, repo: string, prNumber: string): Prom
   return prRefsCache.get(cacheKey)!
 }
 
+/**
+ * PR refs のキャッシュをクリアする。
+ * key を指定すると該当 PR のみ、省略すると全キャッシュと DrawableService のキャッシュも合わせてクリアする。
+ */
 export function clearPrRefsCache(key?: string): void {
   if (key) {
     prRefsCache.delete(key)

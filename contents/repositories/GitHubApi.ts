@@ -11,6 +11,11 @@ export interface BgFetchResult {
   data?: unknown
 }
 
+/**
+ * fetch リクエストを background service worker 経由で実行する。
+ * content script から直接 fetch すると 404 等のエラーがページの DevTools コンソールに
+ * 表示されてしまうため、background で実行することでコンソールへの出力を抑制する。
+ */
 export function bgFetch(
   url: string,
   options?: { method?: string; headers?: Record<string, string> }
@@ -46,6 +51,10 @@ export async function getStoredPat(): Promise<string | null> {
 
 // ─── Raw file fetch ───────────────────────────────────────────────────────────
 
+/**
+ * GitHub の raw ファイル URL からテキストを取得して返す。
+ * 取得に失敗した場合は null を返す。
+ */
 export async function fetchRawGithub(
   org: string,
   repo: string,

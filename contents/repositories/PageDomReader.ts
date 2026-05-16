@@ -7,6 +7,10 @@ const SHA_RE = /^[0-9a-f]{40}$/
 
 // ─── File container helpers ───────────────────────────────────────────────────
 
+/**
+ * ファイルコンテナ要素から diff 対象のファイルパスを取得する。
+ * data-diff-anchor の aria-label → .file-header の data-path → blob リンクの順で探す。
+ */
 export function getFilePath(container: Element): string | null {
   if (container.hasAttribute("data-diff-anchor")) {
     const label = container.getAttribute("aria-label")
@@ -25,6 +29,10 @@ export function getFilePath(container: Element): string | null {
   return null
 }
 
+/**
+ * ファイルコンテナ要素から diff 内容を含む HTMLElement を取得する。
+ * data-diff-anchor コンテナ自身 → .js-file-content → .diff-table → table の順で探す。
+ */
 export function getDiffContent(container: Element): HTMLElement | null {
   if (container.hasAttribute("data-diff-anchor")) {
     return container as HTMLElement
@@ -137,6 +145,10 @@ export interface PageOids {
   baseRefOid: string | null   // pullRequest.baseRefOid: 実際の base ブランチ tip
 }
 
+/**
+ * ページに埋め込まれた `application/json` スクリプトタグから PR の commit SHA を抽出する。
+ * pullRequestsChangesRoute / pullRequestsFilesRoute / pullRequestsLayoutRoute の順で探す。
+ */
 export function extractPrOidsFromPage(): PageOids {
   let baseOid: string | null = null
   let headOid: string | null = null

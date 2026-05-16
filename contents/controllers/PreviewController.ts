@@ -9,6 +9,10 @@ import { clearPanels, handleMutations, scanPage } from "./PrController"
 
 let observer: MutationObserver | null = null
 
+/**
+ * observer を切断してナビゲーションイベントリスナーを解除し、コントローラーを停止する。
+ * Extension context が無効化された際や、ページからアンロードされる際に呼ぶ。
+ */
 function teardown(): void {
   observer?.disconnect()
   observer = null
@@ -16,11 +20,19 @@ function teardown(): void {
   document.removeEventListener("pjax:end", onNavigation)
 }
 
+/**
+ * blob ページのプレビューを処理する。
+ * processBlobPage が extension context の無効化を検知した場合は teardown を呼ぶ。
+ */
 async function handleBlobPage(): Promise<void> {
   const invalidated = await processBlobPage()
   if (invalidated) teardown()
 }
 
+/**
+ * turbo:load / pjax:end などのナビゲーションイベント発生時に呼ばれるハンドラー。
+ * 現在の URL に応じて PR ページのスキャンまたは blob ページのプレビュー処理を実行する。
+ */
 function onNavigation(): void {
   if (!isExtensionValid()) { teardown(); return }
   try {

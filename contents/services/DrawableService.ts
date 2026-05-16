@@ -4,12 +4,18 @@ import { bgFetch, fetchRawGithub, getStoredPat } from "../repositories/GitHubApi
 
 const DRAWABLE_RE = /drawable/i
 
+/**
+ * ファイルパスが drawable ディレクトリ配下の .xml ファイルかどうかを判定する。
+ */
 export function isDrawableXml(path: string): boolean {
   return path.endsWith(".xml") && DRAWABLE_RE.test(path)
 }
 
 // ─── Android selector helpers ─────────────────────────────────────────────────
 
+/**
+ * XML 文字列が Android の `<selector>` リソースかどうかを判定する。
+ */
 export function isAndroidSelector(xml: string): boolean {
   return /<selector[\s>]/i.test(xml) && /android:/i.test(xml)
 }
@@ -19,6 +25,10 @@ export interface ParsedSelectorItem {
   stateLabel: string
 }
 
+/**
+ * `<item>` タグの属性文字列から状態ラベルを生成する。
+ * 例: `android:state_pressed="true"` → `"pressed"`、なければ `"default"`。
+ */
 function inferSelectorStateLabel(attrs: string): string {
   const states: string[] = []
   const stateRe = /android:(state_\w+)="(true|false)"/g
@@ -30,6 +40,9 @@ function inferSelectorStateLabel(attrs: string): string {
   return states.length > 0 ? states.join(", ") : "default"
 }
 
+/**
+ * Android Selector XML を解析して、各 `<item>` の drawable 名と状態ラベルの一覧を返す。
+ */
 export function parseSelectorItems(xml: string): ParsedSelectorItem[] {
   const items: ParsedSelectorItem[] = []
   const itemRe = /<item([^>]*?)(?:\/?>)/gs
@@ -73,6 +86,10 @@ interface GHContentItem {
 // キャッシュキーに認証状態を含めることで PAT の有無による結果の混在を防ぐ
 const contentsListCache = new Map<string, Promise<GHContentItem[] | null>>()
 
+/**
+ * GitHub Contents API でディレクトリ内のファイル一覧を取得してキャッシュする。
+ * PAT の有無をキャッシュキーに含めることで認証状態の混在を防ぐ。
+ */
 function fetchContentsList(
   org: string,
   repo: string,
@@ -109,6 +126,12 @@ function fetchContentsList(
  */
 const gitTreeCache = new Map<string, Promise<string[] | null>>()
 
+/**
+ * Git Trees API でコミット SHA 時点のリポジトリ全ファイルツリーを取得し、
+ * drawable 関連パスのみフィルタしてキャッシュする。
+ * 同一 SHA への複数 drawable 検索でキャッシュを再利用できるため、
+ * HEAD 総当たりより大幅にリクエスト数を削減できる。
+ */
 function fetchGitTreePaths(
   org: string,
   repo: string,
@@ -146,6 +169,9 @@ const XML_DIR_VARIANTS = ["drawable", "drawable-v21", "drawable-v24", "drawable-
 const IMAGE_DIR_VARIANTS = ["drawable", "drawable-night", "drawable-hdpi", "drawable-xhdpi", "drawable-xxhdpi", "drawable-xxxhdpi"]
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"]
 
+/**
+ * HEAD リクエストで URL の存在確認をする。存在すれば URL を、なければ null を返す。
+ */
 async function checkHead(url: string): Promise<string | null> {
   const result = await bgFetch(url, { method: "HEAD" })
   return result.ok ? url : null
@@ -153,6 +179,9 @@ async function checkHead(url: string): Promise<string | null> {
 
 type DrawableCandidate = { url: string; isXml: boolean }
 
+/**
+ * 候補 URL を並行して HEAD チェックし、最初に存在が確認できた候補を返す。
+ */
 async function findFirstCandidate(candidates: DrawableCandidate[]): Promise<DrawableCandidate | null> {
   const results = await Promise.all(
     candidates.map(async (c) => {
@@ -170,6 +199,10 @@ async function findFirstCandidate(candidates: DrawableCandidate[]): Promise<Draw
 interface DrawableDirHint { dir: string; ext: string }
 const drawableDirHintCache = new Map<string, DrawableDirHint>()
 
+/**
+ * 成功した drawable ディレクトリと拡張子を hint キャッシュに保存する。
+ * 次回以降の検索で同じディレクトリを優先して試すことで HEAD リクエスト数を削減する。
+ */
 function saveHint(key: string, dir: string, foundUrl: string): void {
   const ext = foundUrl.split(".").pop() ?? "xml"
   drawableDirHintCache.set(key, { dir, ext })
@@ -182,6 +215,11 @@ export interface DrawableResult {
   imageUrl: string | null
 }
 
+/**
+ * GitHub Contents API を使って drawable ファイルを検索する。
+ * resPrefix 配下のディレクトリ一覧を取得し、drawable* ディレクトリ内でファイルを特定する。
+ * PAT がなければ private リポジトリでは失敗する。
+ */
 async function findDrawableViaContentsApi(
   org: string,
   repo: string,
@@ -222,6 +260,11 @@ async function findDrawableViaContentsApi(
   return { xml: null, imageUrl: `https://github.com/${org}/${repo}/raw/${ref}/${found.path}` }
 }
 
+/**
+ * Git Trees API を使って drawable ファイルを検索する。
+ * コミット SHA 時点のツリー全体を一度取得してキャッシュし、パスマッチで特定する。
+ * Contents API より少ないリクエスト数で済むが、ツリーが truncated の場合は失敗する。
+ */
 async function findDrawableViaGitTree(
   org: string,
   repo: string,
@@ -258,6 +301,11 @@ async function findDrawableViaGitTree(
   return null
 }
 
+/**
+ * HEAD リクエストの総当たりで drawable ファイルを検索する。
+ * ブラウザの Cookie を使ってアクセスするため SAML SSO 環境や PAT 未設定でも動作する。
+ * drawableDirHintCache を使って前回成功したディレクトリを優先的に試す。
+ */
 async function findDrawableViaHeadRequests(
   org: string,
   repo: string,
@@ -342,10 +390,17 @@ export async function findDrawableInModule(
 
 // ─── Cache management ─────────────────────────────────────────────────────────
 
+/**
+ * Contents API のキャッシュのみをクリアする。PAT 変更時に呼ぶ。
+ */
 export function clearContentsListCache(): void {
   contentsListCache.clear()
 }
 
+/**
+ * Contents API・Git Trees API・dir hint の全キャッシュをクリアする。
+ * PAT 変更時やパネルリセット時に呼ぶ。
+ */
 export function clearDrawableServiceCaches(): void {
   contentsListCache.clear()
   drawableDirHintCache.clear()

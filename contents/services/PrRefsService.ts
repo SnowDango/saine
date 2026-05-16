@@ -5,8 +5,6 @@ import { extractPrOidsFromPage, findMergeCommitShaFromDom } from "../repositorie
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
-const SHA_RE = /^[0-9a-f]{40}$/
-
 interface ApiPrRefs {
   base: string | null
   head: string | null

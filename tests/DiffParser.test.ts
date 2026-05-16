@@ -233,9 +233,81 @@ describe("parseVersionsFromDiff — files view (split)", () => {
   })
 })
 
-// ─── Tests: Changes view diff ─────────────────────────────────────────────────
+// ─── Helper: GitHub /changes view (新 DOM) の構築 ────────────────────────────
+//
+// 新 DOM 構造:
+//   td[data-diff-side=left]  (行番号専用、.diff-text-cell なし)
+//   td[data-diff-side=right] (行番号専用、.diff-text-cell なし)
+//   td.diff-text-cell > code.diff-text > div.diff-text-inner
 
-describe("parseVersionsFromDiff — changes view", () => {
+function buildChangesViewContainerNew(
+  rows: { type: "context" | "deleted" | "added"; text: string }[],
+  opts?: { multipleHunks?: boolean }
+): Element {
+  const container = document.createElement("div")
+  container.setAttribute("data-diff-anchor", "")
+
+  // hunk header (新 DOM: code.diff-text-cell.hunk)
+  const hunkRow = document.createElement("tr")
+  const hunkCode = document.createElement("code")
+  hunkCode.classList.add("diff-text-cell", "hunk")
+  hunkCode.textContent = "@@ -1,5 +1,5 @@"
+  hunkRow.appendChild(hunkCode)
+  container.appendChild(hunkRow)
+
+  if (opts?.multipleHunks) {
+    const hunkRow2 = document.createElement("tr")
+    const hunkCode2 = document.createElement("code")
+    hunkCode2.classList.add("diff-text-cell", "hunk")
+    hunkCode2.textContent = "@@ -10,3 +10,3 @@"
+    hunkRow2.appendChild(hunkCode2)
+    container.appendChild(hunkRow2)
+  }
+
+  let leftLineNum = 1
+  let rightLineNum = 1
+
+  for (const row of rows) {
+    const tr = document.createElement("tr")
+
+    const tdLeft = document.createElement("td")
+    tdLeft.setAttribute("data-diff-side", "left")
+    if (row.type === "added") {
+      tdLeft.setAttribute("aria-hidden", "true")
+    } else {
+      tdLeft.textContent = String(leftLineNum++)
+    }
+    tr.appendChild(tdLeft)
+
+    const tdRight = document.createElement("td")
+    tdRight.setAttribute("data-diff-side", "right")
+    if (row.type === "deleted") {
+      tdRight.setAttribute("aria-hidden", "true")
+    } else {
+      tdRight.textContent = String(rightLineNum++)
+    }
+    tr.appendChild(tdRight)
+
+    const tdText = document.createElement("td")
+    tdText.classList.add("diff-text-cell")
+    const code = document.createElement("code")
+    code.classList.add("diff-text")
+    const inner = document.createElement("div")
+    inner.classList.add("diff-text-inner")
+    inner.textContent = row.text
+    code.appendChild(inner)
+    tdText.appendChild(code)
+    tr.appendChild(tdText)
+
+    container.appendChild(tr)
+  }
+
+  return container
+}
+
+// ─── Tests: Changes view diff (旧 DOM) ───────────────────────────────────────
+
+describe("parseVersionsFromDiff — changes view (旧 DOM)", () => {
   it("左右セルのコードを正しく分離する", () => {
     const container = buildChangesViewContainer([
       { left: " context", right: " context" },
@@ -261,6 +333,52 @@ describe("parseVersionsFromDiff — changes view", () => {
     container.setAttribute("data-diff-anchor", "")
     const result = parseVersionsFromDiff(container)
     expect(result).toEqual({ before: null, after: null, isComplete: false })
+  })
+})
+
+// ─── Tests: Changes view diff (新 DOM) ───────────────────────────────────────
+
+describe("parseVersionsFromDiff — changes view (新 DOM)", () => {
+  it("context/deleted/added 行を正しく分離する", () => {
+    const container = buildChangesViewContainerNew([
+      { type: "context", text: "<vector>" },
+      { type: "deleted", text: "  old" },
+      { type: "added", text: "  new" },
+      { type: "context", text: "</vector>" },
+    ])
+    const result = parseVersionsFromDiff(container)
+    expect(result.before).toBe("<vector>\n  old\n</vector>")
+    expect(result.after).toBe("<vector>\n  new\n</vector>")
+    expect(result.isComplete).toBe(true)
+  })
+
+  it("全行が追加のみの場合、before は null", () => {
+    const container = buildChangesViewContainerNew([
+      { type: "added", text: "<vector>" },
+      { type: "added", text: "</vector>" },
+    ])
+    const result = parseVersionsFromDiff(container)
+    expect(result.before).toBeNull()
+    expect(result.after).toBe("<vector>\n</vector>")
+  })
+
+  it("全行が削除のみの場合、after は null", () => {
+    const container = buildChangesViewContainerNew([
+      { type: "deleted", text: "<vector>" },
+      { type: "deleted", text: "</vector>" },
+    ])
+    const result = parseVersionsFromDiff(container)
+    expect(result.before).toBe("<vector>\n</vector>")
+    expect(result.after).toBeNull()
+  })
+
+  it("複数 hunk がある場合、isComplete は false", () => {
+    const container = buildChangesViewContainerNew(
+      [{ type: "context", text: "line" }],
+      { multipleHunks: true }
+    )
+    const result = parseVersionsFromDiff(container)
+    expect(result.isComplete).toBe(false)
   })
 })
 

@@ -210,7 +210,7 @@ function makeColumn(
   const srcDims = svgHtml ? parseSvgAspectRatio(svgHtml) : null
   if (srcDims) {
     const dimsEl = document.createElement("div")
-    dimsEl.textContent = `${Math.round(srcDims.w)} × ${Math.round(srcDims.h)} dp`
+    dimsEl.textContent = `W: ${Math.round(srcDims.w)}dp | H: ${Math.round(srcDims.h)}dp`
     dimsEl.style.cssText = [
       "font-size:11px;",
       "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",
@@ -261,16 +261,6 @@ export function renderPanel(
     "color:var(--fgColor-default,var(--color-fg-default,#1f2328));",
   ].join("")
   left.appendChild(panelTitle)
-  if (!isComplete) {
-    const warn = document.createElement("span")
-    warn.textContent = t("diffTruncated")
-    warn.style.cssText = [
-      "font-size:11px;padding:1px 6px;border-radius:4px;",
-      "color:var(--fgColor-attention,var(--color-attention-fg,#9a6700));",
-      "background:var(--bgColor-attention-muted,var(--color-attention-subtle,#fff8c5));",
-    ].join("")
-    left.appendChild(warn)
-  }
   headerBar.appendChild(left)
 
   // ── Toggle button ──
@@ -493,7 +483,7 @@ export function renderBlobPanel(anchor: Element, svgHtml: string, position: Inse
     const dims = parseSvgAspectRatio(svgHtml)
     if (dims) {
       const d = document.createElement("div")
-      d.textContent = `${Math.round(dims.w)} × ${Math.round(dims.h)} dp`
+      d.textContent = `W: ${Math.round(dims.w)}dp | H: ${Math.round(dims.h)}dp`
       d.style.cssText = [
         "text-align:center;font-size:11px;margin-top:8px;",
         "color:var(--fgColor-muted,var(--color-fg-muted,#656d76));",

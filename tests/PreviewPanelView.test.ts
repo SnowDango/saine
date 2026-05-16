@@ -75,7 +75,7 @@ describe("renderPanel", () => {
     expect(panel.textContent).toContain("deleted")
   })
 
-  it("isComplete=false の場合、警告メッセージが表示される", () => {
+  it("isComplete=false でも警告メッセージは表示されない", () => {
     const { container, diffContent } = makeContainer()
     const data: PreviewData = {
       baseSvg: SIMPLE_SVG,
@@ -86,7 +86,8 @@ describe("renderPanel", () => {
     renderPanel(container, diffContent, data)
 
     const panel = container.querySelector("[data-vdp-panel]")!
-    expect(panel.textContent).toContain("diffTruncated")
+    expect(panel).not.toBeNull()
+    expect(panel.textContent).not.toContain("diffTruncated")
   })
 
   it("SVG がある場合、light/dark 両方のボックスが生成される", () => {

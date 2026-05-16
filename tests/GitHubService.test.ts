@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, afterEach } from "vitest"
 import {
   isPrPage,
   isBlobPage,
@@ -7,6 +7,8 @@ import {
   parseBlobUrlInfo,
   getFilePath,
   getDiffContent,
+  findHeadShaFromContainer,
+  extractPrOidsFromPage,
 } from "~contents/models/GitHubService"
 
 // ─── isPrPage ─────────────────────────────────────────────────────────────────
@@ -186,6 +188,112 @@ describe("getDiffContent", () => {
   it("何もなければ null", () => {
     const container = document.createElement("div")
     expect(getDiffContent(container)).toBeNull()
+  })
+})
+
+// ─── findHeadShaFromContainer ─────────────────────────────────────────────────
+
+const MOCK_SHA = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+
+describe("findHeadShaFromContainer", () => {
+  it("filePath が一致する blob リンクから SHA を抽出する", () => {
+    const container = document.createElement("div")
+    const a = document.createElement("a")
+    a.href = `https://github.com/org/repo/blob/${MOCK_SHA}/drawable/icon.xml`
+    container.appendChild(a)
+    expect(findHeadShaFromContainer(container, "drawable/icon.xml")).toBe(MOCK_SHA)
+  })
+
+  it("filePath が null の場合、URL 先頭の SHA を返す", () => {
+    const container = document.createElement("div")
+    const a = document.createElement("a")
+    a.href = `https://github.com/org/repo/blob/${MOCK_SHA}/other/file.xml`
+    container.appendChild(a)
+    expect(findHeadShaFromContainer(container, null)).toBe(MOCK_SHA)
+  })
+
+  it("SHA 形式でない ref (ブランチ名) は返さない", () => {
+    const container = document.createElement("div")
+    const a = document.createElement("a")
+    a.href = `https://github.com/org/repo/blob/main/drawable/icon.xml`
+    container.appendChild(a)
+    expect(findHeadShaFromContainer(container, "drawable/icon.xml")).toBeNull()
+  })
+
+  it("blob リンクがなければ null を返す", () => {
+    const container = document.createElement("div")
+    expect(findHeadShaFromContainer(container, "drawable/icon.xml")).toBeNull()
+  })
+
+  it("filePath が一致しない blob リンクは無視する", () => {
+    const container = document.createElement("div")
+    const a = document.createElement("a")
+    a.href = `https://github.com/org/repo/blob/${MOCK_SHA}/other/file.xml`
+    container.appendChild(a)
+    // filePath が一致しないが URL 先頭の SHA は取得できる
+    expect(findHeadShaFromContainer(container, "drawable/icon.xml")).toBe(MOCK_SHA)
+  })
+})
+
+// ─── extractPrOidsFromPage ────────────────────────────────────────────────────
+
+describe("extractPrOidsFromPage", () => {
+  let addedScript: HTMLScriptElement | null = null
+
+  function addScript(payload: unknown): void {
+    const script = document.createElement("script")
+    script.type = "application/json"
+    script.textContent = JSON.stringify({ payload })
+    document.head.appendChild(script)
+    addedScript = script
+  }
+
+  afterEach(() => {
+    if (addedScript) {
+      document.head.removeChild(addedScript)
+      addedScript = null
+    }
+  })
+
+  it("pullRequestsChangesRoute から OID を抽出する", () => {
+    addScript({
+      pullRequestsChangesRoute: {
+        comparison: { fullDiff: { baseOid: "base111", headOid: "head222" } },
+      },
+    })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base111", headOid: "head222" })
+  })
+
+  it("pullRequestsFilesRoute から OID を抽出する", () => {
+    addScript({
+      pullRequestsFilesRoute: {
+        comparison: { fullDiff: { baseOid: "base333", headOid: "head444" } },
+      },
+    })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base333", headOid: "head444" })
+  })
+
+  it("pullRequestsLayoutRoute から OID を抽出する", () => {
+    addScript({
+      pullRequestsLayoutRoute: {
+        pullRequest: { comparison: { baseOid: "base555", headOid: "head666" } },
+      },
+    })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base555", headOid: "head666" })
+  })
+
+  it("diffContents の oldCommitOid/newCommitOid から OID を抽出する", () => {
+    addScript({
+      pullRequestsChangesRoute: {
+        diffContents: [{ oldCommitOid: "base777", newCommitOid: "head888" }],
+      },
+    })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: "base777", headOid: "head888" })
+  })
+
+  it("該当データがなければ null/null を返す", () => {
+    addScript({ somethingElse: {} })
+    expect(extractPrOidsFromPage()).toEqual({ baseOid: null, headOid: null })
   })
 })
 

@@ -22,6 +22,8 @@ export interface BlobUrlInfo {
 export interface PrRefs {
   base: string | null
   head: string | null
+  baseSha: string | null
+  headSha: string | null
 }
 
 export type ChangeType = "added" | "modified" | "deleted"

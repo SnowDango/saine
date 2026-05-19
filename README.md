@@ -36,8 +36,8 @@ Preview Android Vector Drawable XML files directly in GitHub Pull Requests.
 ```bash
 git clone https://github.com/SnowDango/saine.git
 cd saine
-npm install
-npm run build
+pnpm install
+pnpm build
 ```
 
 Then load `build/chrome-mv3-prod` as an unpacked extension.
@@ -59,8 +59,8 @@ Click the Saine extension icon to open the popup:
 ## 🛠️ Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Load `build/chrome-mv3-dev` as an unpacked extension. Changes auto-reload.
@@ -69,11 +69,11 @@ Load `build/chrome-mv3-dev` as an unpacked extension. Changes auto-reload.
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Production build |
-| `npm run package` | Build and package as ZIP |
-| `npm test` | Run tests |
-| `npm run lint` | Run ESLint |
+| `pnpm dev` | Start development server with hot reload |
+| `pnpm build` | Production build |
+| `pnpm package` | Build and package as ZIP |
+| `pnpm test` | Run tests |
+| `pnpm lint` | Run ESLint |
 
 ## 📄 License
 

@@ -1,7 +1,7 @@
 {
   "name": "saine",
   "displayName": "Saine",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Android Vector Preview on Github",
   "author": "SnowDango",
   "packageManager": "pnpm@10.15.0",

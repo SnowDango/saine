@@ -36,8 +36,8 @@ GitHub の Pull Request 上で Android Vector Drawable XML ファイルを直接
 ```bash
 git clone https://github.com/SnowDango/saine.git
 cd saine
-npm install
-npm run build
+pnpm install
+pnpm build
 ```
 
 `build/chrome-mv3-prod` を「パッケージ化されていない拡張機能」として読み込んでください。
@@ -59,8 +59,8 @@ Saine の拡張機能アイコンをクリックしてポップアップを開�
 ## 🛠️ 開発
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 `build/chrome-mv3-dev` を「パッケージ化されていない拡張機能」として読み込んでください。変更は自動的にリロードされます。
@@ -69,11 +69,11 @@ npm run dev
 
 | コマンド | 説明 |
 |---|---|
-| `npm run dev` | ホットリロード付き開発サーバーを起動 |
-| `npm run build` | プロダクションビルド |
-| `npm run package` | ビルドして ZIP にパッケージ |
-| `npm test` | テストを実行 |
-| `npm run lint` | ESLint を実行 |
+| `pnpm dev` | ホットリロード付き開発サーバーを起動 |
+| `pnpm build` | プロダクションビルド |
+| `pnpm package` | ビルドして ZIP にパッケージ |
+| `pnpm test` | テストを実行 |
+| `pnpm lint` | ESLint を実行 |
 
 ## 📄 ライセンス
 

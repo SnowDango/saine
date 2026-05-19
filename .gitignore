@@ -31,3 +31,13 @@ dist/
 
 # typescript
 *.tsbuildinfo
+
+# IDE
+.idea/inspectionProfiles/
+.idea/modules.xml
+.idea/prettier.xml
+.idea/*.iml
+.idea/vcs.xml
+
+# auto-generated
+tabs/third-party-licenses.ts
